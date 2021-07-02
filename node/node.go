@@ -397,10 +397,10 @@ func (n *Node) startRPC() error {
 
 	if n.config.EnableWhiteNoise {
 		log.Info("register name for whitenoise")
-		for _, api := range n.rpcAPIs {
-			if err := n.whitenoise.RegisterName(api.Namespace, api.Service); err != nil {
-				return err
-			}
+		//todo: register from WhiteNoise apis whitelist config
+		err := RegisterApisFromWhitelist(n.rpcAPIs, n.config.HTTPModules, n.whitenoise.rpcServer, false)
+		if err != nil {
+			return err
 		}
 
 		ctx := context.Background()
