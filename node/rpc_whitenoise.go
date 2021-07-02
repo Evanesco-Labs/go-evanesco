@@ -8,10 +8,12 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
 	"math/rand"
+	"sync"
 	"time"
 )
 
 type WhiteNoiseServer struct {
+	mux          sync.Mutex
 	log          log.Logger
 	host         string
 	port         int
@@ -25,6 +27,7 @@ type WhiteNoiseServer struct {
 
 func NewWhiteNoiseServer(log log.Logger, account *account.Account) *WhiteNoiseServer {
 	return &WhiteNoiseServer{
+		mux:          sync.Mutex{},
 		log:          log,
 		host:         "localhost",
 		port:         0,
@@ -90,4 +93,12 @@ func (wnServer *WhiteNoiseServer) start(ctx context.Context, bootstrap string) e
 	})
 
 	return err
+}
+
+func (wnServer *WhiteNoiseServer) stop() {
+	wnServer.mux.Lock()
+	defer wnServer.mux.Unlock()
+	wnServer.rpcServer.Stop()
+	wnServer.client = nil
+	wnServer.log.Info("whitenosie rpc server stopped")
 }

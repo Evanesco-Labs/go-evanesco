@@ -5,10 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/Evanesco-Labs/WhiteNoise/sdk"
 	"github.com/Evanesco-Labs/WhiteNoise/secure"
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
 	"math/rand"
@@ -98,7 +96,6 @@ type JsonWhiteNoise struct {
 func (wn JsonWhiteNoise) readBatch() (messages []*jsonrpcMessage, batch bool, err error) {
 	// Decode the next JSON object in the input stream.
 	// This verifies basic syntax, etc.
-	log.Info("whitenoise read batch")
 	rawmsg := make([]byte, 0)
 	for {
 		rawmsg, err = secure.ReadPayload(wn.Conn)
@@ -112,7 +109,6 @@ func (wn JsonWhiteNoise) readBatch() (messages []*jsonrpcMessage, batch bool, er
 		}
 	}
 
-	fmt.Println(rawmsg)
 	messages, batch = parseMessage(rawmsg)
 	for i, msg := range messages {
 		if msg == nil {
@@ -137,7 +133,6 @@ func (j JsonWhiteNoise) writeJSON(ctx context.Context, v interface{}) error {
 		return err
 	}
 	msg := buf.Bytes()
-	fmt.Println(msg)
 	encoded := secure.EncodePayload(msg)
 	return j.Client.SendMessage(encoded, j.SessioinID)
 }
