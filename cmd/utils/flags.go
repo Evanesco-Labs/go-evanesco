@@ -775,6 +775,17 @@ var (
 		Name:  "catalyst",
 		Usage: "Catalyst mode (eth2 integration testing)",
 	}
+
+	//WhiteNoise RPC Server configs
+	WhiteNoiseEnabledFlag = cli.BoolFlag{
+		Name:  "wn",
+		Usage: "Enable WhiteNoise-RPC server for full node",
+	}
+
+	WhiteNoiseBootstrapFlag = cli.StringFlag{
+		Name:  "wn-bootstrap",
+		Usage: "Bootstrap node Multiaddress of the WhiteNoise network to access",
+	}
 )
 
 // MakeDataDir retrieves the currently requested data directory, terminating
@@ -977,6 +988,15 @@ func setHTTP(ctx *cli.Context, cfg *node.Config) {
 	}
 	if ctx.GlobalIsSet(AllowUnprotectedTxs.Name) {
 		cfg.AllowUnprotectedTxs = ctx.GlobalBool(AllowUnprotectedTxs.Name)
+	}
+}
+
+func setWhiteNoise(ctx *cli.Context, cfg *node.Config) {
+	if ctx.GlobalIsSet(WhiteNoiseEnabledFlag.Name) {
+		cfg.EnableWhiteNoise = ctx.GlobalBool(WhiteNoiseEnabledFlag.Name)
+	}
+	if ctx.GlobalIsSet(WhiteNoiseBootstrapFlag.Name) && cfg.EnableWhiteNoise {
+		cfg.BootstrapAddress = ctx.GlobalString(WhiteNoiseBootstrapFlag.Name)
 	}
 }
 
@@ -1226,6 +1246,7 @@ func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
 	setNodeUserIdent(ctx, cfg)
 	setDataDir(ctx, cfg)
 	setSmartCard(ctx, cfg)
+	setWhiteNoise(ctx, cfg)
 
 	if ctx.GlobalIsSet(ExternalSignerFlag.Name) {
 		cfg.ExternalSigner = ctx.GlobalString(ExternalSignerFlag.Name)

@@ -32,7 +32,7 @@ import (
 	"github.com/ethereum/go-ethereum/console/prompt"
 	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/eth/downloader"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/evaclient"
 	"github.com/ethereum/go-ethereum/internal/debug"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/internal/flags"
@@ -184,6 +184,8 @@ var (
 		utils.RPCGlobalGasCapFlag,
 		utils.RPCGlobalTxFeeCapFlag,
 		utils.AllowUnprotectedTxs,
+		utils.WhiteNoiseEnabledFlag,
+		utils.WhiteNoiseBootstrapFlag,
 	}
 
 	metricsFlags = []cli.Flag{
@@ -345,7 +347,7 @@ func startNode(ctx *cli.Context, stack *node.Node, backend ethapi.Backend) {
 	if err != nil {
 		utils.Fatalf("Failed to attach to self: %v", err)
 	}
-	ethClient := ethclient.NewClient(rpcClient)
+	ethClient := evaclient.NewClient(rpcClient)
 
 	go func() {
 		// Open any wallets already attached

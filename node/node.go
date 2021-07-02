@@ -17,6 +17,7 @@
 package node
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -26,6 +27,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Evanesco-Labs/WhiteNoise/common/account"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/ethdb"
@@ -56,6 +58,7 @@ type Node struct {
 	ws            *httpServer //
 	ipc           *ipcServer  // Stores information about the ipc http server
 	inprocHandler *rpc.Server // In-process RPC request handler to process the API requests
+	whitenoise    *WhiteNoiseServer
 
 	databases map[*closeTrackingDB]struct{} // All open databases
 }
@@ -147,6 +150,9 @@ func New(conf *Config) (*Node, error) {
 	node.http = newHTTPServer(node.log, conf.HTTPTimeouts)
 	node.ws = newHTTPServer(node.log, rpc.DefaultHTTPTimeouts)
 	node.ipc = newIPCServer(node.log, conf.IPCEndpoint())
+	//todo: not use instance account
+	acc, _ := account.NewOneTimeAccount(0)
+	node.whitenoise = NewWhiteNoiseServer(node.log, acc)
 
 	return node, nil
 }
@@ -383,7 +389,26 @@ func (n *Node) startRPC() error {
 	if err := n.http.start(); err != nil {
 		return err
 	}
-	return n.ws.start()
+
+	err := n.ws.start()
+	if err != nil {
+		return err
+	}
+
+	if n.config.EnableWhiteNoise {
+		log.Info("register name for whitenoise")
+		for _, api := range n.rpcAPIs {
+			if err := n.whitenoise.RegisterName(api.Namespace, api.Service); err != nil {
+				return err
+			}
+		}
+
+		ctx := context.Background()
+		if err := n.whitenoise.start(ctx, n.config.BootstrapAddress); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (n *Node) wsServerForPort(port int) *httpServer {
