@@ -423,6 +423,7 @@ func (n *Node) stopRPC() {
 	n.ws.stop()
 	n.ipc.stop()
 	n.stopInProc()
+	n.whitenoise.stop()
 }
 
 // startInProc registers all RPC APIs on the inproc server.
