@@ -74,9 +74,10 @@ type BatchElem struct {
 
 // Client represents a connection to an RPC server.
 type Client struct {
-	idgen    func() ID // for subscriptions
-	isHTTP   bool
-	services *serviceRegistry
+	idgen        func() ID // for subscriptions
+	isHTTP       bool
+	isWhiteNoise bool
+	services     *serviceRegistry
 
 	idCounter uint32
 
@@ -178,6 +179,8 @@ func DialContext(ctx context.Context, rawurl string) (*Client, error) {
 		return DialWebsocket(ctx, rawurl, "")
 	case "stdio":
 		return DialStdIO(ctx)
+	case "wn":
+		return DialWhiteNoise(ctx, rawurl)
 	case "":
 		return DialIPC(ctx, rawurl)
 	default:
@@ -635,6 +638,7 @@ func (c *Client) read(codec ServerCodec) {
 		if _, ok := err.(*json.SyntaxError); ok {
 			codec.writeJSON(context.Background(), errorMessage(&parseError{err.Error()}))
 		}
+		log.Debug("get msg" + fmt.Sprintf("%v", msgs))
 		if err != nil {
 			c.readErr <- err
 			return

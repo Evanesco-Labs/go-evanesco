@@ -25,15 +25,15 @@ import (
 	"github.com/ethereum/go-ethereum/cmd/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/contracts/checkpointoracle"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/evaclient"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 	"gopkg.in/urfave/cli.v1"
 )
 
 // newClient creates a client with specified remote URL.
-func newClient(ctx *cli.Context) *ethclient.Client {
-	client, err := ethclient.Dial(ctx.GlobalString(nodeURLFlag.Name))
+func newClient(ctx *cli.Context) *evaclient.Client {
+	client, err := evaclient.Dial(ctx.GlobalString(nodeURLFlag.Name))
 	if err != nil {
 		utils.Fatalf("Failed to connect to Ethereum node: %v", err)
 	}
@@ -103,7 +103,7 @@ func newContract(client *rpc.Client) (common.Address, *checkpointoracle.Checkpoi
 	if addr == (common.Address{}) {
 		utils.Fatalf("No specified registrar contract address")
 	}
-	contract, err := checkpointoracle.NewCheckpointOracle(addr, ethclient.NewClient(client))
+	contract, err := checkpointoracle.NewCheckpointOracle(addr, evaclient.NewClient(client))
 	if err != nil {
 		utils.Fatalf("Failed to setup registrar contract %s: %v", addr, err)
 	}
