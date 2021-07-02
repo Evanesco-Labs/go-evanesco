@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-const KeyType = 0
+const DefaultWhiteNoiseKeyType = 0
 const MaxPeersList = 10
 
 func DialWhiteNoise(ctx context.Context, endpoint string) (*Client, error) {
@@ -25,7 +25,7 @@ func DialWhiteNoise(ctx context.Context, endpoint string) (*Client, error) {
 		return nil, err
 	}
 	sdk.BootStrapPeers = bootstrapAddr
-	wnClient, err := sdk.NewOneTimeClient(ctx, 0)
+	wnClient, err := sdk.NewOneTimeClient(ctx, DefaultWhiteNoiseKeyType)
 	if err != nil {
 		return nil, err
 	}
