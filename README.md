@@ -9,32 +9,37 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 )](https://pkg.go.dev/github.com/ethereum/go-ethereum?tab=doc)
 [![Discord](https://img.shields.io/badge/discord-join%20chat-blue.svg)](https://discord.com/invite/VnYXBSF)
 
-But from that baseline of EVM compatible, Evanesco Main Chain introduces a system of 21 validators with Proof of Staked Authority (PoSA) consensus that can support short block time and lower fees. The most bonded validator candidates of staking will become validators and produce blocks. The double-sign detection and other slashing logic guarantee security, stability, and chain finality.
+**The Evanesco Main Chain** will be:
 
-Cross-chain transfer and other communication are possible due to native support of interoperability. Relayers and on-chain contracts are developed to support that. **The Evanesco Main Chain** will be:
-
-- **A self-sovereign blockchain**: Provides security and safety with elected validators.
+- **A self-sovereign blockchain**: Provides security and safety with miner and elected validators.
 - **EVM-compatible**: Supports all the existing Ethereum tooling along with faster finality and cheaper transaction fees.
 - **Interoperable**: Comes with efficient native dual chain communication; Optimized for scaling high-performance dApps that require fast and smooth user experience.
-- **Distributed with on-chain governance**: Proof of Staked Authority brings in decentralization and community participants. As the native token, EVA will serve as both the gas of smart contract execution and tokens for staking.
+- **Distributed with on-chain governance**: GPOW brings in decentralization and community participants. As the native token, EVA will serve as both the gas of smart contract execution and tokens for staking.
+
+Cross-chain transfer and other communication are possible due to native support of interoperability. CrossWrapper and on-chain contracts are developed to support that. 
 
 More details in [White Paper](https://evanesco.org/assets/whitepaper.pdf).
 
 ## Key features
 
-### Proof of Staked Authority
-Although Proof-of-Work (PoW) has been approved as a practical mechanism to implement a decentralized network, it is not friendly to the environment and also requires a large size of participants to maintain the security.
+### Grandpa over PoW
+Although Proof-of-Work (PoW) has been approved as a practical mechanism to implement a decentralized network, it is not friendly to the environment and also requires a large size of participants to maintain the security and consistency.
 
-Proof-of-Authority(PoA) provides some defense to 51% attack, with improved efficiency and tolerance to certain levels of Byzantine players (malicious or hacked).
-Meanwhile, the PoA protocol is most criticized for being not as decentralized as PoW, as the validators, i.e. the nodes that take turns to produce blocks, have all the authorities and are prone to corruption and security attacks.
+To combine PoW and Grandpa for consensus, Evanesco Main Chain implement a novel consensus engine called GPoW that:
 
-To combine PoW and PoA for consensus, Evanesco Main Chain implement a novel consensus engine called GPoW that:
+GPoW consensus includes two layers of consensus mechanisms, which are nested, influence each other and play different roles. GPoW algorithm not only provides almost real-time, asynchronous and safe finality similar to GRANDPA algorithm, but also can fairly distribute new tokens according to PoW, enabling a wider range of communities to go in for the construction of the whole ecology.
+The basic steps of the GPoW consensus are:
+1.	When the whole network starts, the network miners start to run PoW algorithm and transmit data based on the privacy cascade communication protocol.
+a.In the case of transaction or routing data, public or cascaded private transmission is set based on transaction settings
+b.In the case of a PoW block, it is publicly broadcast to nearby network nodes
+c.On average, the network miner calculates a PoW block and broadcasts it every 10 minutes
 
-1. Blocks are produced by a limited set of validators.
-2. Validators take turns to produce blocks in a PoA manner, similar to Ethereum's Clique consensus engine.
-3. Validator set are elected in and out based on a staking based governance on Evanesco Chain.
-4. The validator set change is relayed via a cross-chain communication mechanism.
-5. GPoW consensus engine will interact with a set of [system contracts]() to achieve liveness slash, revenue distributing and validator set renewing func.
+2.	The two-layer Sorter network packages the broadcast transactions into blocks, and determines the final consistency of the whole chain according to GRANDPA protocol.
+a.In the case of transaction data, the block-generating person is obtained according to the drawing algorithm, and the block is generated and determined as final (second level)
+b.In the case of a PoW block, the most suitable block is determined according to the content of the block broadcast by the block-generating person and the finality is determined (10 minutes)
+
+
+Now we are at the stage of **α-testnet**, Evanesco α Chain introduces a system of 7 validators with POA consensus that can support Privacy Account and EVM-compatible privacy-middleware. It is very easy to test the functionality of Evanesco.
 
 
 ## Native Token
@@ -74,7 +79,7 @@ directory.
 |  **`eva`**   | Evanesco Main Chain client binary. It is the entry point into the Evanesco network (main-, test- or private net), capable of running as a full node (default), archive node (retaining all historical state) or a light node (retrieving data live). It has the same and more RPC and other interface as go-ethereum and can be used by other processes as a gateway into the Evanesco network via JSON RPC endpoints exposed on top of HTTP, WebSocket and/or IPC transports. `eva --help` and the [CLI page](https://geth.ethereum.org/docs/interface/command-line-options) for command line options.          |
 |   `clef`      | Stand-alone signing tool, which can be used as a backend signer for `eva`.  |
 |   `devp2p`    | Utilities to interact with nodes on the networking layer, without running a full blockchain. |
-|   `abigen`    | Source code generator to convert Ethereum contract definitions into easy to use, compile-time type-safe Go packages. It operates on plain [Ethereum contract ABIs](https://docs.soliditylang.org/en/develop/abi-spec.html) with expanded functionality if the contract bytecode is also available. However, it also accepts Solidity source files, making development much more streamlined. Please see our [Native DApps](https://geth.ethereum.org/docs/dapp/native-bindings) page for details. |
+|   `abigen`    | Source code generator to convert Ethereum contract definitions into easy to use, compile-time type-safe Go packages. It operates on plain [Ethereum contract ABIs](https://docs.soliditylang.org/en/develop/abi-spec.html) with expanded functionality if the contract bytecode is also available. However, it also accepts Solidity source files, making development much more streamlined. 
 |  `bootnode`   | Stripped down version of our Ethereum client implementation that only takes part in the network node discovery protocol, but does not run any of the higher level application protocols. It can be used as a lightweight bootstrap node to aid in finding peers in private networks.                                                                                                                                                                                                                                                                 |
 |     `evm`     | Developer utility version of the EVM (Ethereum Virtual Machine) that is capable of running bytecode snippets within a configurable environment and execution mode. Its purpose is to allow isolated, fine-grained debugging of EVM opcodes (e.g. `evm --code 60ff60ff --debug run`).                                                                                                                                                                                                                                                                     |
 |   `rlpdump`   | Developer utility tool to convert binary RLP ([Recursive Length Prefix](https://eth.wiki/en/fundamentals/rlp)) dumps (data encoding used by the Ethereum protocol both network as well as consensus wise) to user-friendlier hierarchical representation (e.g. `rlpdump --hex CE0183FFFFFFC4C304050583616263`).                                                                                                                                                                                                                                 |
@@ -111,14 +116,12 @@ This command will:
 
 Steps:
 
-1. Download the binary, config and genesis files from [release](), or compile the binary by `make eva`.
+1. Download the binary,compile the binary by `make eva`.
 2. Init genesis state: `./eva --datadir node init genesis.json`.
 3. Start your fullnode: `./eva --config ./config.toml --datadir ./node`.
 4. Or start a validator node: `./eva --config ./config.toml --datadir ./node -unlock ${validatorAddr} --mine --allow-insecure-unlock`. The ${validatorAddr} is the wallet account address of your running validator node.
 
 *Note: The default p2p port is 30311 and the RPC port is 8575 which is different from Ethereum.*
-
-More details about [running a node]() and [becoming a validator]().
 
 *Note: Although there are some internal protective measures to prevent transactions from
 crossing over between the main network and test network, you should make sure to always
@@ -147,7 +150,7 @@ $ eva --your-favourite-flags dumpconfig
 As a developer, sooner rather than later you'll want to start interacting with `eva` and the
 Evanesco network via your own programs and not manually through the console. To aid
 this, `eva` has built-in support for a JSON-RPC based APIs, as on Ethereum, ([standard APIs](https://eth.wiki/json-rpc/API)
-and [`eva` specific APIs](https://geth.ethereum.org/docs/rpc/server)).
+
 These can be exposed via HTTP, WebSockets and IPC (UNIX sockets on UNIX based
 platforms, and named pipes on Windows).
 
@@ -205,9 +208,6 @@ Please make sure your contributions adhere to our coding guidelines:
 * Commit messages should be prefixed with the package(s) they modify.
     * E.g. "eth, rpc: make trace configs optional"
 
-Please see the [Developers' Guide](https://geth.ethereum.org/docs/developers/devguide)
-for more details on configuring your environment, managing project dependencies, and
-testing procedures.
 
 ## License
 
