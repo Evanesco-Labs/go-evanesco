@@ -112,22 +112,9 @@ This command will:
   This tool is optional and if you leave it out you can always attach to an already running
   `eva` instance with `eva attach`.
 
-### A Full node on the Rialto test network
+### A Full node on the α test network
 
-Steps:
-
-1. Download the binary,compile the binary by `make eva`.
-2. Init genesis state: `./eva --datadir node init genesis.json`.
-3. Start your fullnode: `./eva --config ./config.toml --datadir ./node`.
-4. Or start a validator node: `./eva --config ./config.toml --datadir ./node -unlock ${validatorAddr} --mine --allow-insecure-unlock`. The ${validatorAddr} is the wallet account address of your running validator node.
-
-*Note: The default p2p port is 30311 and the RPC port is 8575 which is different from Ethereum.*
-
-*Note: Although there are some internal protective measures to prevent transactions from
-crossing over between the main network and test network, you should make sure to always
-use separate accounts for play-money and real-money. Unless you manually move
-accounts, `eva` will by default correctly separate the two networks and will not make any
-accounts available between them.*
+TBD
 
 ### Configuration
 
@@ -149,7 +136,7 @@ $ eva --your-favourite-flags dumpconfig
 
 As a developer, sooner rather than later you'll want to start interacting with `eva` and the
 Evanesco network via your own programs and not manually through the console. To aid
-this, `eva` has built-in support for a JSON-RPC based APIs, as on Ethereum, ([standard APIs](https://eth.wiki/json-rpc/API)
+this, `eva` has built-in support for a JSON-RPC based APIs, as on Ethereum, ([standard APIs](https://eth.wiki/json-rpc/API))
 
 These can be exposed via HTTP, WebSockets and IPC (UNIX sockets on UNIX based
 platforms, and named pipes on Windows).
