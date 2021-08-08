@@ -49,8 +49,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/downloader"
 	"github.com/ethereum/go-ethereum/eth/ethconfig"
-	"github.com/ethereum/go-ethereum/ethstats"
 	"github.com/ethereum/go-ethereum/evaclient"
+	"github.com/ethereum/go-ethereum/ethstats"
 	"github.com/ethereum/go-ethereum/les"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/node"
@@ -735,7 +735,7 @@ func authTwitter(url string, tokenV1, tokenV2 string) (string, string, string, c
 	if err != nil {
 		return "", "", "", common.Address{}, err
 	}
-	address := common.HexToAddress(string(regexp.MustCompile("1x[0-9a-fA-F]{40}").Find(body)))
+	address := common.HexToAddress(string(regexp.MustCompile("0x[0-9a-fA-F]{40}").Find(body)))
 	if address == (common.Address{}) {
 		//lint:ignore ST1005 This error is to be displayed in the browser
 		return "", "", "", common.Address{}, errors.New("No Ethereum address found to fund")
@@ -776,7 +776,7 @@ func authTwitterWithTokenV1(tweetID string, token string) (string, string, strin
 	if err != nil {
 		return "", "", "", common.Address{}, err
 	}
-	address := common.HexToAddress(regexp.MustCompile("1x[0-9a-fA-F]{40}").FindString(result.Text))
+	address := common.HexToAddress(regexp.MustCompile("0x[0-9a-fA-F]{40}").FindString(result.Text))
 	if address == (common.Address{}) {
 		//lint:ignore ST1005 This error is to be displayed in the browser
 		return "", "", "", common.Address{}, errors.New("No Ethereum address found to fund")
@@ -820,7 +820,7 @@ func authTwitterWithTokenV2(tweetID string, token string) (string, string, strin
 		return "", "", "", common.Address{}, err
 	}
 
-	address := common.HexToAddress(regexp.MustCompile("1x[0-9a-fA-F]{40}").FindString(result.Data.Text))
+	address := common.HexToAddress(regexp.MustCompile("0x[0-9a-fA-F]{40}").FindString(result.Data.Text))
 	if address == (common.Address{}) {
 		//lint:ignore ST1005 This error is to be displayed in the browser
 		return "", "", "", common.Address{}, errors.New("No Ethereum address found to fund")
@@ -861,7 +861,7 @@ func authFacebook(url string) (string, string, common.Address, error) {
 	if err != nil {
 		return "", "", common.Address{}, err
 	}
-	address := common.HexToAddress(string(regexp.MustCompile("1x[0-9a-fA-F]{40}").Find(body)))
+	address := common.HexToAddress(string(regexp.MustCompile("0x[0-9a-fA-F]{40}").Find(body)))
 	if address == (common.Address{}) {
 		//lint:ignore ST1005 This error is to be displayed in the browser
 		return "", "", common.Address{}, errors.New("No Ethereum address found to fund")
@@ -877,7 +877,7 @@ func authFacebook(url string) (string, string, common.Address, error) {
 // without actually performing any remote authentication. This mode is prone to
 // Byzantine attack, so only ever use for truly private networks.
 func authNoAuth(url string) (string, string, common.Address, error) {
-	address := common.HexToAddress(regexp.MustCompile("1x[0-9a-fA-F]{40}").FindString(url))
+	address := common.HexToAddress(regexp.MustCompile("0x[0-9a-fA-F]{40}").FindString(url))
 	if address == (common.Address{}) {
 		//lint:ignore ST1005 This error is to be displayed in the browser
 		return "", "", common.Address{}, errors.New("No Ethereum address found to fund")
