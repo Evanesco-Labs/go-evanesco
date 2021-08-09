@@ -266,7 +266,7 @@ func (a *Address) checksumHex() []byte {
 
 func (a Address) hex() []byte {
 	var buf [len(a)*2 + 2]byte
-	copy(buf[:2], "1x")
+	copy(buf[:2], "Ex")
 	hex.Encode(buf[2:], a[:])
 	return buf[:]
 }
@@ -400,10 +400,10 @@ func (ma *MixedcaseAddress) UnmarshalJSON(input []byte) error {
 
 // MarshalJSON marshals the original value
 func (ma *MixedcaseAddress) MarshalJSON() ([]byte, error) {
-	if strings.HasPrefix(ma.original, "1x") || strings.HasPrefix(ma.original, "1X") {
-		return json.Marshal(fmt.Sprintf("1x%s", ma.original[2:]))
+	if strings.HasPrefix(ma.original, "Ex") || strings.HasPrefix(ma.original, "EX") {
+		return json.Marshal(fmt.Sprintf("Ex%s", ma.original[2:]))
 	}
-	return json.Marshal(fmt.Sprintf("1x%s", ma.original))
+	return json.Marshal(fmt.Sprintf("Ex%s", ma.original))
 }
 
 // Address returns the address
