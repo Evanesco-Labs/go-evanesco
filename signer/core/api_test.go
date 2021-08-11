@@ -224,7 +224,7 @@ func TestNewAcc(t *testing.T) {
 }
 
 func mkTestTx(from common.MixedcaseAddress) core.SendTxArgs {
-	to := common.NewMixedcaseAddress(common.HexToAddress("0x1337"))
+	to := common.NewMixedcaseAddress(common.HexToAddress("Ex1337"))
 	gas := hexutil.Uint64(21000)
 	gasPrice := (hexutil.Big)(*big.NewInt(2000000000))
 	value := (hexutil.Big)(*big.NewInt(1e18))

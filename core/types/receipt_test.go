@@ -40,8 +40,8 @@ func TestDecodeEmptyTypedReceipt(t *testing.T) {
 // Tests that receipt data can be correctly derived from the contextual infos
 func TestDeriveFields(t *testing.T) {
 	// Create a few transactions to have receipts for
-	to2 := common.HexToAddress("0x2")
-	to3 := common.HexToAddress("0x3")
+	to2 := common.HexToAddress("Ex2")
+	to3 := common.HexToAddress("Ex3")
 	txs := Transactions{
 		NewTx(&LegacyTx{
 			Nonce:    1,

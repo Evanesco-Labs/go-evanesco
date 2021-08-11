@@ -61,21 +61,21 @@ func TestDump(t *testing.T) {
 	want := `{
     "root": "71edff0130dd2385947095001c73d9e28d862fc286fca2b922ca6f6f3cddfdd2",
     "accounts": {
-        "0x0000000000000000000000000000000000000001": {
+        "Ex0000000000000000000000000000000000000001": {
             "balance": "22",
             "nonce": 0,
             "root": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
             "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
             "key": "0x1468288056310c82aa4c01a7e12a10f8111a0560e72b700555479031b86c357d"
         },
-        "0x0000000000000000000000000000000000000002": {
+        "Ex0000000000000000000000000000000000000002": {
             "balance": "44",
             "nonce": 0,
             "root": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
             "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
             "key": "0xd52688a8f926c816ca1e079067caba944f158e764817b83fc43594370ca9cf62"
         },
-        "0x0000000000000000000000000000000000000102": {
+        "Ex0000000000000000000000000000000000000102": {
             "balance": "0",
             "nonce": 0,
             "root": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
@@ -92,7 +92,7 @@ func TestDump(t *testing.T) {
 
 func TestNull(t *testing.T) {
 	s := newStateTest()
-	address := common.HexToAddress("0x823140710bf13990e4500136726d8b55")
+	address := common.HexToAddress("Ex823140710bf13990e4500136726d8b55")
 	s.state.CreateAccount(address)
 	//value := common.FromHex("0x823140710bf13990e4500136726d8b55")
 	var value common.Hash

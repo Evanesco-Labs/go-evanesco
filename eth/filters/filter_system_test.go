@@ -223,11 +223,11 @@ func TestPendingTxFilter(t *testing.T) {
 		api     = NewPublicFilterAPI(backend, false, deadline)
 
 		transactions = []*types.Transaction{
-			types.NewTransaction(0, common.HexToAddress("0xb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
-			types.NewTransaction(1, common.HexToAddress("0xb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
-			types.NewTransaction(2, common.HexToAddress("0xb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
-			types.NewTransaction(3, common.HexToAddress("0xb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
-			types.NewTransaction(4, common.HexToAddress("0xb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
+			types.NewTransaction(0, common.HexToAddress("Exb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
+			types.NewTransaction(1, common.HexToAddress("Exb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
+			types.NewTransaction(2, common.HexToAddress("Exb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
+			types.NewTransaction(3, common.HexToAddress("Exb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
+			types.NewTransaction(4, common.HexToAddress("Exb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil),
 		}
 
 		hashes []common.Hash
@@ -368,10 +368,10 @@ func TestLogFilter(t *testing.T) {
 		backend = &testBackend{db: db}
 		api     = NewPublicFilterAPI(backend, false, deadline)
 
-		firstAddr      = common.HexToAddress("0x1111111111111111111111111111111111111111")
-		secondAddr     = common.HexToAddress("0x2222222222222222222222222222222222222222")
-		thirdAddress   = common.HexToAddress("0x3333333333333333333333333333333333333333")
-		notUsedAddress = common.HexToAddress("0x9999999999999999999999999999999999999999")
+		firstAddr      = common.HexToAddress("Ex1111111111111111111111111111111111111111")
+		secondAddr     = common.HexToAddress("Ex2222222222222222222222222222222222222222")
+		thirdAddress   = common.HexToAddress("Ex3333333333333333333333333333333333333333")
+		notUsedAddress = common.HexToAddress("Ex9999999999999999999999999999999999999999")
 		firstTopic     = common.HexToHash("0x1111111111111111111111111111111111111111111111111111111111111111")
 		secondTopic    = common.HexToHash("0x2222222222222222222222222222222222222222222222222222222222222222")
 		notUsedTopic   = common.HexToHash("0x9999999999999999999999999999999999999999999999999999999999999999")
@@ -482,10 +482,10 @@ func TestPendingLogsSubscription(t *testing.T) {
 		backend = &testBackend{db: db}
 		api     = NewPublicFilterAPI(backend, false, deadline)
 
-		firstAddr      = common.HexToAddress("0x1111111111111111111111111111111111111111")
-		secondAddr     = common.HexToAddress("0x2222222222222222222222222222222222222222")
-		thirdAddress   = common.HexToAddress("0x3333333333333333333333333333333333333333")
-		notUsedAddress = common.HexToAddress("0x9999999999999999999999999999999999999999")
+		firstAddr      = common.HexToAddress("Ex1111111111111111111111111111111111111111")
+		secondAddr     = common.HexToAddress("Ex2222222222222222222222222222222222222222")
+		thirdAddress   = common.HexToAddress("Ex3333333333333333333333333333333333333333")
+		notUsedAddress = common.HexToAddress("Ex9999999999999999999999999999999999999999")
 		firstTopic     = common.HexToHash("0x1111111111111111111111111111111111111111111111111111111111111111")
 		secondTopic    = common.HexToHash("0x2222222222222222222222222222222222222222222222222222222222222222")
 		thirdTopic     = common.HexToHash("0x3333333333333333333333333333333333333333333333333333333333333333")
@@ -630,7 +630,7 @@ func TestPendingTxFilterDeadlock(t *testing.T) {
 			default:
 			}
 
-			tx := types.NewTransaction(i, common.HexToAddress("0xb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil)
+			tx := types.NewTransaction(i, common.HexToAddress("Exb794f5ea0ba39494ce83a213fffba74279579268"), new(big.Int), 0, new(big.Int), nil)
 			backend.txFeed.Send(core.NewTxsEvent{Txs: []*types.Transaction{tx}})
 			i++
 		}
