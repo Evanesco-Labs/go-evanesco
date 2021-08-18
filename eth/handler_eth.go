@@ -98,10 +98,22 @@ func (h *ethHandler) Handle(peer *eth.Peer, packet eth.Packet) error {
 
 	case *eth.PooledTransactionsPacket:
 		return h.txFetcher.Enqueue(peer.ID(), *packet, true)
+	case *eth.LotteryPacket:
+		return h.handleLottery(peer, *packet)
 
 	default:
 		return fmt.Errorf("unexpected eth packet type: %T", packet)
 	}
+}
+
+func (h *ethHandler) handleLottery(peer *eth.Peer, lotPacket eth.LotteryPacket) error {
+	if !h.Chain().VerifyLottery(lotPacket.Lottery, lotPacket.Signature[:]) {
+		return errors.New("lottery verify failed")
+	}
+	(*handler)(h).BroadcastLottery(lotPacket)
+	//handle in clique
+	h.Chain().HandleValidLottery(lotPacket.Lottery)
+	return nil
 }
 
 // handleHeaders is invoked from a peer's message handler when it transmits a batch

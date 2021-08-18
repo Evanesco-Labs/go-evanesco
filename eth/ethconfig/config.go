@@ -25,6 +25,7 @@ import (
 	"runtime"
 	"time"
 
+	zkpminer "github.com/Evanesco-Labs/miner"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/clique"
@@ -88,6 +89,8 @@ var Defaults = Config{
 		GasPrice: big.NewInt(params.GWei),
 		Recommit: 3 * time.Second,
 	},
+	ZKPminer:    zkpminer.DefaultConfig(),
+	ZKPVkPath: "./verifykey.txt",
 	TxPool:      core.DefaultTxPoolConfig,
 	RPCGasCap:   50000000,
 	GPO:         FullNodeGPO,
@@ -170,6 +173,11 @@ type Config struct {
 
 	// Mining options
 	Miner miner.Config
+
+	//ZKP miner options
+	ZKPminer zkpminer.Config
+
+	ZKPVkPath string
 
 	// Ethash options
 	Ethash ethash.Config

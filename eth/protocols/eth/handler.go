@@ -186,6 +186,7 @@ var eth65 = map[uint64]msgHandler{
 	NewPooledTransactionHashesMsg: handleNewPooledTransactionHashes,
 	GetPooledTransactionsMsg:      handleGetPooledTransactions,
 	PooledTransactionsMsg:         handlePooledTransactions,
+	LotteryMsg:                    handleLotteryMsg,
 }
 
 var eth66 = map[uint64]msgHandler{
@@ -204,6 +205,8 @@ var eth66 = map[uint64]msgHandler{
 	ReceiptsMsg:              handleReceipts66,
 	GetPooledTransactionsMsg: handleGetPooledTransactions66,
 	PooledTransactionsMsg:    handlePooledTransactions66,
+
+	LotteryMsg: handleLotteryMsg,
 }
 
 // handleMessage is invoked whenever an inbound message is received from a remote
@@ -235,6 +238,7 @@ func handleMessage(backend Backend, peer *Peer) error {
 			metrics.GetOrRegisterHistogramLazy(h, nil, sampler).Update(time.Since(start).Microseconds())
 		}(time.Now())
 	}
+
 	if handler := handlers[msg.Code]; handler != nil {
 		return handler(backend, msg, peer)
 	}

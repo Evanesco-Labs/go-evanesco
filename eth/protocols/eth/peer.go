@@ -17,6 +17,7 @@
 package eth
 
 import (
+	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 	"math/rand"
 	"sync"
@@ -54,6 +55,9 @@ const (
 	// dropping broadcasts. Similarly to block propagations, there's no point to queue
 	// above some healthy uncle limit, so use that.
 	maxQueuedBlockAnns = 4
+
+	maxQueuedLotteries = 4096
+	maxKnownLotteries  = 32768
 )
 
 // max is a helper function which returns the larger of the two given integers.
@@ -84,6 +88,9 @@ type Peer struct {
 	txBroadcast chan []common.Hash // Channel used to queue transaction propagation requests
 	txAnnounce  chan []common.Hash // Channel used to queue transaction announcement requests
 
+	knowLotteries  mapset.Set
+	queueLotteries chan *LotteryPacket
+
 	term chan struct{} // Termination channel to stop the broadcasters
 	lock sync.RWMutex  // Mutex protecting the internal fields
 }
@@ -103,11 +110,14 @@ func NewPeer(version uint, p *p2p.Peer, rw p2p.MsgReadWriter, txpool TxPool) *Pe
 		txBroadcast:     make(chan []common.Hash),
 		txAnnounce:      make(chan []common.Hash),
 		txpool:          txpool,
+		knowLotteries:   mapset.NewSet(),
+		queueLotteries:  make(chan *LotteryPacket, maxQueuedLotteries),
 		term:            make(chan struct{}),
 	}
 	// Start up all the broadcasters
 	go peer.broadcastBlocks()
 	go peer.broadcastTransactions()
+	go peer.broadcastLotteries()
 	if version >= ETH65 {
 		go peer.announceTransactions()
 	}
@@ -159,6 +169,10 @@ func (p *Peer) KnownTransaction(hash common.Hash) bool {
 	return p.knownTxs.Contains(hash)
 }
 
+func (p *Peer) KnowLottery(hash common.Hash) bool {
+	return p.knowLotteries.Contains(hash)
+}
+
 // markBlock marks a block as known for the peer, ensuring that the block will
 // never be propagated to this particular peer.
 func (p *Peer) markBlock(hash common.Hash) {
@@ -177,6 +191,13 @@ func (p *Peer) markTransaction(hash common.Hash) {
 		p.knownTxs.Pop()
 	}
 	p.knownTxs.Add(hash)
+}
+
+func (p *Peer) markLottery(hash common.Hash) {
+	for p.knowLotteries.Cardinality() >= maxKnownLotteries {
+		p.knowLotteries.Pop()
+	}
+	p.knowLotteries.Add(hash)
 }
 
 // SendTransactions sends transactions to the peer and includes the hashes
@@ -329,6 +350,24 @@ func (p *Peer) SendNewBlock(block *types.Block, td *big.Int) error {
 		Block: block,
 		TD:    td,
 	})
+}
+
+func (p *Peer) SendNewLottery(packet *LotteryPacket) error {
+	log.Info("p2p send lottery packet")
+	for p.knowLotteries.Cardinality() >= maxKnownLotteries {
+		p.knowLotteries.Pop()
+	}
+	p.knowLotteries.Add(packet.Hash())
+	return p2p.Send(p.rw, LotteryMsg, *packet)
+}
+
+func (p *Peer) AsyncSendNewLottery(packet *LotteryPacket) {
+	select {
+	case p.queueLotteries <- packet:
+		p.markLottery(packet.Hash())
+	default:
+		p.Log().Debug("Dropping lottery send", "hash", packet.Hash())
+	}
 }
 
 // AsyncSendNewBlock queues an entire block for propagation to a remote peer. If

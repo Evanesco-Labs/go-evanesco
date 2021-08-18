@@ -17,8 +17,10 @@
 package eth
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 	"io"
 	"math/big"
 
@@ -68,6 +70,9 @@ const (
 	NewPooledTransactionHashesMsg = 0x08
 	GetPooledTransactionsMsg      = 0x09
 	PooledTransactionsMsg         = 0x0a
+
+	//Protocol messages overloaded in evanesco mining
+	LotteryMsg = 0x0b
 )
 
 var (
@@ -79,6 +84,7 @@ var (
 	errNetworkIDMismatch       = errors.New("network ID mismatch")
 	errGenesisMismatch         = errors.New("genesis mismatch")
 	errForkIDRejected          = errors.New("fork ID rejected")
+	errLotteryNotClique        = errors.New("invalid lottery")
 )
 
 // Packet represents a p2p message in the `eth` protocol.
@@ -115,6 +121,24 @@ func (p *NewBlockHashesPacket) Unpack() ([]common.Hash, []uint64) {
 		hashes[i], numbers[i] = body.Hash, body.Number
 	}
 	return hashes, numbers
+}
+
+type LotteryPacket types.LotterySubmit
+
+//func (lp *LotteryPacket) DecodeRLP(stream *rlp.Stream) error {
+//	panic("implement me")
+//}
+//
+//func (lp *LotteryPacket) EncodeRLP(writer io.Writer) error {
+//	panic("implement me")
+//}
+
+func (lp *LotteryPacket) Hash() common.Hash {
+	b, err := json.Marshal(lp)
+	if err != nil {
+		return common.Hash{}
+	}
+	return crypto.Keccak256Hash(b)
 }
 
 // TransactionsPacket is the network packet for broadcasting new transactions.
@@ -365,3 +389,6 @@ func (*GetPooledTransactionsPacket) Kind() byte   { return GetPooledTransactions
 
 func (*PooledTransactionsPacket) Name() string { return "PooledTransactions" }
 func (*PooledTransactionsPacket) Kind() byte   { return PooledTransactionsMsg }
+
+func (*LotteryPacket) Name() string { return "LotteryMsg" }
+func (*LotteryPacket) Kind() byte   { return LotteryMsg }
