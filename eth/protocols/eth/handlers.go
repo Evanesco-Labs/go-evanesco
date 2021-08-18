@@ -18,7 +18,9 @@ package eth
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	clique2 "github.com/ethereum/go-ethereum/consensus/clique"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -517,4 +519,24 @@ func handlePooledTransactions66(backend Backend, msg Decoder, peer *Peer) error 
 	requestTracker.Fulfil(peer.id, peer.version, PooledTransactionsMsg, txs.RequestId)
 
 	return backend.Handle(peer, &txs.PooledTransactionsPacket)
+}
+
+func handleLotteryMsg(backend Backend, msg Decoder, peer *Peer) error {
+	var lottery LotteryPacket
+	if err := msg.Decode(&lottery); err != nil {
+		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
+	}
+	clique, ok := backend.Chain().Engine().(*clique2.Clique)
+	if !ok {
+		return fmt.Errorf("%w: message %v: %v", errLotteryNotClique, msg, errors.New("not clique consensus"))
+	}
+
+	// mark this lottery
+	peer.markLottery(lottery.Hash())
+
+	//check if this lottery better than best
+	if !clique.IfLotteryBetterThanBest(lottery.Lottery) {
+		return nil
+	}
+	return backend.Handle(peer, &lottery)
 }

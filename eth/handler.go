@@ -18,6 +18,7 @@ package eth
 
 import (
 	"errors"
+	clique2 "github.com/ethereum/go-ethereum/consensus/clique"
 	"math"
 	"math/big"
 	"sync"
@@ -109,10 +110,11 @@ type handler struct {
 	txFetcher    *fetcher.TxFetcher
 	peers        *peerSet
 
-	eventMux      *event.TypeMux
-	txsCh         chan core.NewTxsEvent
-	txsSub        event.Subscription
-	minedBlockSub *event.TypeMuxSubscription
+	eventMux         *event.TypeMux
+	txsCh            chan core.NewTxsEvent
+	txsSub           event.Subscription
+	minedBlockSub    *event.TypeMuxSubscription
+	solvedLotterySub *event.TypeMuxSubscription
 
 	whitelist map[uint64]common.Hash
 
@@ -407,6 +409,10 @@ func (h *handler) Start(maxPeers int) {
 	h.minedBlockSub = h.eventMux.Subscribe(core.NewMinedBlockEvent{})
 	go h.minedBroadcastLoop()
 
+	h.wg.Add(1)
+	h.solvedLotterySub = h.eventMux.Subscribe(core.NewSolvedLotteryEvent{})
+	go h.lotteryBroadcastLoop()
+
 	// start sync handlers
 	h.wg.Add(2)
 	go h.chainSync.loop()
@@ -416,6 +422,7 @@ func (h *handler) Start(maxPeers int) {
 func (h *handler) Stop() {
 	h.txsSub.Unsubscribe()        // quits txBroadcastLoop
 	h.minedBlockSub.Unsubscribe() // quits blockBroadcastLoop
+	h.solvedLotterySub.Unsubscribe()
 
 	// Quit chainSync and txsync64.
 	// After this is done, no new peers will be accepted.
@@ -430,6 +437,14 @@ func (h *handler) Stop() {
 	h.peerWG.Wait()
 
 	log.Info("Ethereum protocol stopped")
+}
+
+func (h *handler) BroadcastLottery(packet eth.LotteryPacket) {
+	log.Info("broadcast lottery async")
+	peers := h.peers.peersWithoutLottery(packet.Hash())
+	for _, peer := range peers {
+		peer.AsyncSendNewLottery(&packet)
+	}
 }
 
 // BroadcastBlock will either propagate a block to a subset of its peers, or
@@ -529,6 +544,32 @@ func (h *handler) txBroadcastLoop() {
 			h.BroadcastTransactions(event.Txs)
 		case <-h.txsSub.Err():
 			return
+		}
+	}
+}
+
+//handle and broadcast lotteries from self zkp miner
+func (h *handler) lotteryBroadcastLoop() {
+	defer h.wg.Done()
+	for obj := range h.solvedLotterySub.Chan() {
+		if ev, ok := obj.Data.(core.NewSolvedLotteryEvent); ok {
+			//check if better
+			clique,ok := h.chain.Engine().(*clique2.Clique)
+			if !ok{
+				continue
+			}
+			if !clique.IfLotteryBetterThanBest(ev.Lot.Lottery){
+				continue
+			}
+
+			//handle local solved lottery
+			if !h.chain.VerifyLottery(ev.Lot.Lottery, ev.Lot.Signature[:]) {
+				log.Warn("Local ZKP miner submit invalid lottery")
+				continue
+			}
+
+			h.chain.HandleValidLottery(ev.Lot.Lottery)
+			h.BroadcastLottery(eth.LotteryPacket(ev.Lot))
 		}
 	}
 }

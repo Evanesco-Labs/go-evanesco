@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/log"
 	"io"
 	"math/big"
 	"os"
@@ -64,6 +65,11 @@ func (api *PublicEthereumAPI) Coinbase() (common.Address, error) {
 // Hashrate returns the POW hashrate
 func (api *PublicEthereumAPI) Hashrate() hexutil.Uint64 {
 	return hexutil.Uint64(api.e.Miner().Hashrate())
+}
+
+func (api *PublicEthereumAPI) LotterySubmit(submit types.LotterySubmit) error {
+	log.Info("receive lottery submit", "hash", submit.Hash())
+	return api.e.eventMux.Post(core.NewSolvedLotteryEvent{Lot: submit})
 }
 
 // PublicMinerAPI provides an API to control the miner.

@@ -182,8 +182,48 @@ type Clique struct {
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
 
+	bestLottery types.Lottery
+	bestScore   *big.Int
+
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
+}
+
+func (c *Clique) ResetbestLottery() {
+	log.Info("reset best lottery")
+	c.bestLottery = types.Lottery{
+		CoinbaseAddr:        common.Address{},
+		MinerAddr:           common.Address{},
+		ChallengeHeaderHash: [32]byte{},
+		Index:               [32]byte{},
+		MimcHash:            []byte{},
+		ZkpProof:            []byte{},
+		VrfProof:            []byte{},
+	}
+}
+
+func (c *Clique) ResetBestScore() {
+	c.bestScore = new(big.Int).SetUint64(uint64(0))
+}
+
+func (c *Clique) IfLotteryBetterThanBest(l types.Lottery) bool {
+	return l.Score().CmpAbs(c.bestScore) == 1
+}
+
+func (c *Clique) SetInboundLotteryScore(l types.Lottery) {
+	if l.Score().CmpAbs(c.bestScore) != 1 {
+		return
+	}
+	c.bestLottery = l
+	c.bestScore = l.Score()
+}
+
+func (c *Clique) GetBestLottery() types.Lottery {
+	return c.bestLottery
+}
+
+func (c *Clique) GetBestScore() *big.Int {
+	return new(big.Int).SetBytes(c.bestScore.Bytes())
 }
 
 // New creates a Clique proof-of-authority consensus engine with the initial
@@ -198,13 +238,16 @@ func New(config *params.CliqueConfig, db ethdb.Database) *Clique {
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
-	return &Clique{
+	cli := &Clique{
 		config:     &conf,
 		db:         db,
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
 	}
+	cli.ResetbestLottery()
+	cli.ResetBestScore()
+	return cli
 }
 
 // Author implements consensus.Engine, returning the Ethereum address recovered
@@ -504,6 +547,7 @@ func (c *Clique) verifySeal(chain consensus.ChainHeaderReader, header *types.Hea
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
 // header for running the transactions on top.
 func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header) error {
+	log.Info("prepare block", "number", header.Number)
 	// If the block isn't a checkpoint, cast a random vote (good enough for now)
 	header.Coinbase = common.Address{}
 	header.Nonce = types.BlockNonce{}
@@ -563,6 +607,15 @@ func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 	if header.Time < uint64(time.Now().Unix()) {
 		header.Time = uint64(time.Now().Unix())
 	}
+
+	// Sealing the zkp reward block
+	if header.IsZKPReward() {
+		header.ZKPReward = types.ZKPReward{
+			CoinbaseAddr: c.bestLottery.CoinbaseAddr,
+			Score:        c.bestLottery.ScoreBytes(),
+		}
+	}
+
 	return nil
 }
 
@@ -570,6 +623,18 @@ func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 // rewards given.
 func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
 	// No block rewards in PoA, so the state remains as is and uncles are dropped
+	// Accumulate any block and uncle rewards and commit the final state root
+	log.Info("finalized block", "number", header.Number)
+	empty := common.Address{}
+	if header.IsZKPReward() {
+		log.Info("finalize coinbase block")
+		log.Info("finalize", "header", header)
+		if header.ZKPReward.CoinbaseAddr != empty {
+			c.ResetBestScore()
+			c.ResetbestLottery()
+			state.AddBalance(header.ZKPReward.CoinbaseAddr, new(big.Int).SetUint64(types.RewardAmount))
+		}
+	}
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 }
@@ -597,6 +662,7 @@ func (c *Clique) Authorize(signer common.Address, signFn SignerFn) {
 // Seal implements consensus.Engine, attempting to create a sealed block using
 // the local signing credentials.
 func (c *Clique) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
+	log.Info("Seal block", "number", block.Number())
 	header := block.Header()
 
 	// Sealing the genesis block is not supported
@@ -709,7 +775,7 @@ func (c *Clique) APIs(chain consensus.ChainHeaderReader) []rpc.API {
 // SealHash returns the hash of a block prior to it being sealed.
 func SealHash(header *types.Header) (hash common.Hash) {
 	hasher := sha3.NewLegacyKeccak256()
-	encodeSigHeader(hasher, header)
+	encodeSigHeaderWithoutReward(hasher, header)
 	hasher.Sum(hash[:0])
 	return hash
 }
@@ -723,11 +789,38 @@ func SealHash(header *types.Header) (hash common.Hash) {
 // or not), which could be abused to produce different hashes for the same header.
 func CliqueRLP(header *types.Header) []byte {
 	b := new(bytes.Buffer)
-	encodeSigHeader(b, header)
+	encodeSigHeaderWithoutReward(b, header)
 	return b.Bytes()
 }
 
-func encodeSigHeader(w io.Writer, header *types.Header) {
+func encodeSigHeaderWithReward(w io.Writer, header *types.Header) {
+	enc := []interface{}{
+		header.ParentHash,
+		header.UncleHash,
+		header.Coinbase,
+		header.Root,
+		header.TxHash,
+		header.ReceiptHash,
+		header.Bloom,
+		header.Difficulty,
+		header.Number,
+		header.GasLimit,
+		header.GasUsed,
+		header.Time,
+		header.Extra[:len(header.Extra)-crypto.SignatureLength], // Yes, this will panic if extra is too short
+		header.MixDigest,
+		header.Nonce,
+		header.ZKPReward,
+	}
+	if header.BaseFee != nil {
+		enc = append(enc, header.BaseFee)
+	}
+	if err := rlp.Encode(w, enc); err != nil {
+		panic("can't encode: " + err.Error())
+	}
+}
+
+func encodeSigHeaderWithoutReward(w io.Writer, header *types.Header) {
 	enc := []interface{}{
 		header.ParentHash,
 		header.UncleHash,

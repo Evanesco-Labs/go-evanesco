@@ -26,6 +26,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	evaminer "github.com/Evanesco-Labs/miner"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -93,6 +94,8 @@ type Ethereum struct {
 	netRPCService *ethapi.PublicNetAPI
 
 	p2pServer *p2p.Server
+
+	zkpMiner *evaminer.Miner
 
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 }
@@ -190,6 +193,12 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			Preimages:           config.Preimages,
 		}
 	)
+	//add verify key path
+	if chainConfig != nil {
+		log.Info("copy:",config.ZKPVkPath)
+		chainConfig.Clique.VKPath = config.ZKPVkPath
+	}
+
 	eth.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, chainConfig, eth.engine, vmConfig, eth.shouldPreserve, &config.TxLookupLimit)
 	if err != nil {
 		return nil, err
@@ -436,6 +445,27 @@ func (s *Ethereum) SetEtherbase(etherbase common.Address) {
 	s.lock.Unlock()
 
 	s.miner.SetEtherbase(etherbase)
+}
+
+func (s *Ethereum) StartZKPMiner(config evaminer.Config) error {
+	_, ok := s.engine.(*clique.Clique)
+	if !ok {
+		return errors.New("start ZKP miner with not-clique engine")
+	}
+
+	zkpMiner, err := evaminer.NewLocalMiner(config, s)
+	if err != nil {
+		return err
+	}
+	s.zkpMiner = zkpMiner
+	return nil
+}
+
+func (s *Ethereum) CloseZKPMiner() {
+	if s.zkpMiner == nil {
+		return
+	}
+	s.zkpMiner.Close()
 }
 
 // StartMining starts the miner with the given number of CPU threads. If mining

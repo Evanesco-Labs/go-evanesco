@@ -8,10 +8,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 )
-
-var _ = (*headerMarshaling)(nil)
 
 // MarshalJSON marshals as JSON.
 func (h Header) MarshalJSON() ([]byte, error) {
@@ -23,16 +20,16 @@ func (h Header) MarshalJSON() ([]byte, error) {
 		TxHash      common.Hash    `json:"transactionsRoot" gencodec:"required"`
 		ReceiptHash common.Hash    `json:"receiptsRoot"     gencodec:"required"`
 		Bloom       Bloom          `json:"logsBloom"        gencodec:"required"`
-		Difficulty  *hexutil.Big   `json:"difficulty"       gencodec:"required"`
-		Number      *hexutil.Big   `json:"number"           gencodec:"required"`
-		GasLimit    hexutil.Uint64 `json:"gasLimit"         gencodec:"required"`
-		GasUsed     hexutil.Uint64 `json:"gasUsed"          gencodec:"required"`
-		Time        hexutil.Uint64 `json:"timestamp"        gencodec:"required"`
-		Extra       hexutil.Bytes  `json:"extraData"        gencodec:"required"`
+		Difficulty  *big.Int       `json:"difficulty"       gencodec:"required"`
+		Number      *big.Int       `json:"number"           gencodec:"required"`
+		GasLimit    uint64         `json:"gasLimit"         gencodec:"required"`
+		GasUsed     uint64         `json:"gasUsed"          gencodec:"required"`
+		Time        uint64         `json:"timestamp"        gencodec:"required"`
+		Extra       []byte         `json:"extraData"        gencodec:"required"`
 		MixDigest   common.Hash    `json:"mixHash"`
 		Nonce       BlockNonce     `json:"nonce"`
-		BaseFee     *hexutil.Big   `json:"baseFeePerGas" rlp:"optional"`
-		Hash        common.Hash    `json:"hash"`
+		ZKPReward   ZKPReward      `json:"zkp_reward"`
+		BaseFee     *big.Int       `json:"baseFeePerGas" rlp:"optional"`
 	}
 	var enc Header
 	enc.ParentHash = h.ParentHash
@@ -42,16 +39,16 @@ func (h Header) MarshalJSON() ([]byte, error) {
 	enc.TxHash = h.TxHash
 	enc.ReceiptHash = h.ReceiptHash
 	enc.Bloom = h.Bloom
-	enc.Difficulty = (*hexutil.Big)(h.Difficulty)
-	enc.Number = (*hexutil.Big)(h.Number)
-	enc.GasLimit = hexutil.Uint64(h.GasLimit)
-	enc.GasUsed = hexutil.Uint64(h.GasUsed)
-	enc.Time = hexutil.Uint64(h.Time)
+	enc.Difficulty = h.Difficulty
+	enc.Number = h.Number
+	enc.GasLimit = h.GasLimit
+	enc.GasUsed = h.GasUsed
+	enc.Time = h.Time
 	enc.Extra = h.Extra
 	enc.MixDigest = h.MixDigest
 	enc.Nonce = h.Nonce
-	enc.BaseFee = (*hexutil.Big)(h.BaseFee)
-	enc.Hash = h.Hash()
+	enc.ZKPReward = h.ZKPReward
+	enc.BaseFee = h.BaseFee
 	return json.Marshal(&enc)
 }
 
@@ -65,15 +62,16 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 		TxHash      *common.Hash    `json:"transactionsRoot" gencodec:"required"`
 		ReceiptHash *common.Hash    `json:"receiptsRoot"     gencodec:"required"`
 		Bloom       *Bloom          `json:"logsBloom"        gencodec:"required"`
-		Difficulty  *hexutil.Big    `json:"difficulty"       gencodec:"required"`
-		Number      *hexutil.Big    `json:"number"           gencodec:"required"`
-		GasLimit    *hexutil.Uint64 `json:"gasLimit"         gencodec:"required"`
-		GasUsed     *hexutil.Uint64 `json:"gasUsed"          gencodec:"required"`
-		Time        *hexutil.Uint64 `json:"timestamp"        gencodec:"required"`
-		Extra       *hexutil.Bytes  `json:"extraData"        gencodec:"required"`
+		Difficulty  *big.Int        `json:"difficulty"       gencodec:"required"`
+		Number      *big.Int        `json:"number"           gencodec:"required"`
+		GasLimit    *uint64         `json:"gasLimit"         gencodec:"required"`
+		GasUsed     *uint64         `json:"gasUsed"          gencodec:"required"`
+		Time        *uint64         `json:"timestamp"        gencodec:"required"`
+		Extra       []byte          `json:"extraData"        gencodec:"required"`
 		MixDigest   *common.Hash    `json:"mixHash"`
 		Nonce       *BlockNonce     `json:"nonce"`
-		BaseFee     *hexutil.Big    `json:"baseFeePerGas" rlp:"optional"`
+		ZKPReward   *ZKPReward      `json:"zkp_reward"`
+		BaseFee     *big.Int        `json:"baseFeePerGas" rlp:"optional"`
 	}
 	var dec Header
 	if err := json.Unmarshal(input, &dec); err != nil {
@@ -110,35 +108,38 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 	if dec.Difficulty == nil {
 		return errors.New("missing required field 'difficulty' for Header")
 	}
-	h.Difficulty = (*big.Int)(dec.Difficulty)
+	h.Difficulty = dec.Difficulty
 	if dec.Number == nil {
 		return errors.New("missing required field 'number' for Header")
 	}
-	h.Number = (*big.Int)(dec.Number)
+	h.Number = dec.Number
 	if dec.GasLimit == nil {
 		return errors.New("missing required field 'gasLimit' for Header")
 	}
-	h.GasLimit = uint64(*dec.GasLimit)
+	h.GasLimit = *dec.GasLimit
 	if dec.GasUsed == nil {
 		return errors.New("missing required field 'gasUsed' for Header")
 	}
-	h.GasUsed = uint64(*dec.GasUsed)
+	h.GasUsed = *dec.GasUsed
 	if dec.Time == nil {
 		return errors.New("missing required field 'timestamp' for Header")
 	}
-	h.Time = uint64(*dec.Time)
+	h.Time = *dec.Time
 	if dec.Extra == nil {
 		return errors.New("missing required field 'extraData' for Header")
 	}
-	h.Extra = *dec.Extra
+	h.Extra = dec.Extra
 	if dec.MixDigest != nil {
 		h.MixDigest = *dec.MixDigest
 	}
 	if dec.Nonce != nil {
 		h.Nonce = *dec.Nonce
 	}
+	if dec.ZKPReward != nil {
+		h.ZKPReward = *dec.ZKPReward
+	}
 	if dec.BaseFee != nil {
-		h.BaseFee = (*big.Int)(dec.BaseFee)
+		h.BaseFee = dec.BaseFee
 	}
 	return nil
 }
