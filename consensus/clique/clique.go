@@ -182,14 +182,14 @@ type Clique struct {
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
 
-	bestLottery types.Lottery
-	bestScore   *big.Int
+	bestLottery types.Lottery //Best lottery ever received in this mining epoch
+	bestScore   *big.Int      //Best score ever received in this mining epoch
 
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
 }
 
-func (c *Clique) ResetbestLottery() {
+func (c *Clique) ResetBestLotteryandScore() {
 	log.Info("reset best lottery")
 	c.bestLottery = types.Lottery{
 		CoinbaseAddr:        common.Address{},
@@ -200,9 +200,6 @@ func (c *Clique) ResetbestLottery() {
 		ZkpProof:            []byte{},
 		VrfProof:            []byte{},
 	}
-}
-
-func (c *Clique) ResetBestScore() {
 	c.bestScore = new(big.Int).SetUint64(uint64(0))
 }
 
@@ -245,8 +242,7 @@ func New(config *params.CliqueConfig, db ethdb.Database) *Clique {
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
 	}
-	cli.ResetbestLottery()
-	cli.ResetBestScore()
+	cli.ResetBestLotteryandScore()
 	return cli
 }
 
@@ -547,7 +543,7 @@ func (c *Clique) verifySeal(chain consensus.ChainHeaderReader, header *types.Hea
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
 // header for running the transactions on top.
 func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header) error {
-	log.Info("prepare block", "number", header.Number)
+	log.Debug("prepare block", "number", header.Number)
 	// If the block isn't a checkpoint, cast a random vote (good enough for now)
 	header.Coinbase = common.Address{}
 	header.Nonce = types.BlockNonce{}
@@ -608,8 +604,8 @@ func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 		header.Time = uint64(time.Now().Unix())
 	}
 
-	// Sealing the zkp reward block
-	if header.IsZKPReward() {
+	// Add best lottery to block header
+	if header.IsZKPRewardBlock() {
 		header.ZKPReward = types.ZKPReward{
 			CoinbaseAddr: c.bestLottery.CoinbaseAddr,
 			Score:        c.bestLottery.ScoreBytes(),
@@ -619,19 +615,15 @@ func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 	return nil
 }
 
-// Finalize implements consensus.Engine, ensuring no uncles are set, nor block
-// rewards given.
+// Finalize implements consensus.Engine, ensuring no uncles are set, given ZKP mining reward if it's the last block in this mining epoch.
 func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
 	// No block rewards in PoA, so the state remains as is and uncles are dropped
 	// Accumulate any block and uncle rewards and commit the final state root
-	log.Info("finalized block", "number", header.Number)
+	log.Debug("finalized block", "number", header.Number)
 	empty := common.Address{}
-	if header.IsZKPReward() {
-		log.Info("finalize coinbase block")
-		log.Info("finalize", "header", header)
+	if header.IsZKPRewardBlock() {
 		if header.ZKPReward.CoinbaseAddr != empty {
-			c.ResetBestScore()
-			c.ResetbestLottery()
+			c.ResetBestLotteryandScore()
 			state.AddBalance(header.ZKPReward.CoinbaseAddr, new(big.Int).SetUint64(types.RewardAmount))
 		}
 	}
@@ -662,7 +654,7 @@ func (c *Clique) Authorize(signer common.Address, signFn SignerFn) {
 // Seal implements consensus.Engine, attempting to create a sealed block using
 // the local signing credentials.
 func (c *Clique) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
-	log.Info("Seal block", "number", block.Number())
+	log.Debug("Seal block", "number", block.Number())
 	header := block.Header()
 
 	// Sealing the genesis block is not supported

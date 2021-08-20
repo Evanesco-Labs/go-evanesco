@@ -548,7 +548,7 @@ func (h *handler) txBroadcastLoop() {
 	}
 }
 
-//handle and broadcast lotteries from self zkp miner
+//handle and broadcast lotteries from local and remote zkp miner
 func (h *handler) lotteryBroadcastLoop() {
 	defer h.wg.Done()
 	for obj := range h.solvedLotterySub.Chan() {

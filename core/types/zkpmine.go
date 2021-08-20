@@ -101,7 +101,7 @@ func (lp *LotterySubmit) Hash() common.Hash {
 	return crypto.Keccak256Hash(b)
 }
 
-func (h *Header) IsZKPReward() bool {
+func (h *Header) IsZKPRewardBlock() bool {
 	zero := new(big.Int).SetUint64(uint64(0))
 	return new(big.Int).Mod(h.Number, new(big.Int).SetUint64(CoinBaseInterval)).Cmp(zero) == 0
 }

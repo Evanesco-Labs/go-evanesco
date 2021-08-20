@@ -521,6 +521,7 @@ func handlePooledTransactions66(backend Backend, msg Decoder, peer *Peer) error 
 	return backend.Handle(peer, &txs.PooledTransactionsPacket)
 }
 
+//handle lottery send from other peer nodes
 func handleLotteryMsg(backend Backend, msg Decoder, peer *Peer) error {
 	var lottery LotteryPacket
 	if err := msg.Decode(&lottery); err != nil {

@@ -262,7 +262,6 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 		return header, nil
 	}
 
-	log.Info("vkpath:", chainConfig.Clique.VKPath)
 	verifier, err := problem.NewProblemVerifier(chainConfig.Clique.VKPath,
 		types.CoinBaseInterval,
 		types.SubmitAdvance,
@@ -273,7 +272,6 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 	}
 
 	bc.verifier = verifier
-	log.Info("generate ZKP verifier")
 
 	bc.hc, err = NewHeaderChain(db, chainConfig, engine, bc.insertStopped)
 	if err != nil {
@@ -2298,9 +2296,8 @@ func (bc *BlockChain) resetLotteryLoop() {
 	for {
 		select {
 		case ev := <-blockEventCh:
-			if ev.Block.Header().IsZKPReward() {
-				clique.ResetbestLottery()
-				clique.ResetBestScore()
+			if ev.Block.Header().IsZKPRewardBlock() {
+				clique.ResetBestLotteryandScore()
 				bc.lastCoinbaseHeader = bc.CurrentHeader()
 			}
 		case <-sub.Err():
@@ -2314,8 +2311,6 @@ func (bc *BlockChain) GetLastCoinbaseHeader() *types.Header {
 }
 
 func (bc *BlockChain) VerifyLottery(l types.Lottery, sig []byte) bool {
-	log.Info("lastcoinbase header", "header", bc.lastCoinbaseHeader)
-	log.Info("lastcoinbase header hash", "hash", bc.lastCoinbaseHeader.Hash())
 	return bc.verifier.VerifyLottery(&l, sig, bc.lastCoinbaseHeader)
 }
 

@@ -186,6 +186,9 @@ var (
 		utils.AllowUnprotectedTxs,
 		utils.WhiteNoiseEnabledFlag,
 		utils.WhiteNoiseBootstrapFlag,
+	}
+
+	zkpMineFlags = []cli.Flag{
 		utils.ZKPVkPath,
 		utils.ZKPMinerCoinbaseAddress,
 		utils.ZKPMinerKeyPath,
@@ -252,6 +255,7 @@ func init() {
 	app.Flags = append(app.Flags, consoleFlags...)
 	app.Flags = append(app.Flags, debug.Flags...)
 	app.Flags = append(app.Flags, metricsFlags...)
+	app.Flags = append(app.Flags, zkpMineFlags...)
 
 	app.Before = func(ctx *cli.Context) error {
 		return debug.Setup(ctx)
