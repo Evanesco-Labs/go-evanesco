@@ -125,14 +125,6 @@ func (p *NewBlockHashesPacket) Unpack() ([]common.Hash, []uint64) {
 
 type LotteryPacket types.LotterySubmit
 
-//func (lp *LotteryPacket) DecodeRLP(stream *rlp.Stream) error {
-//	panic("implement me")
-//}
-//
-//func (lp *LotteryPacket) EncodeRLP(writer io.Writer) error {
-//	panic("implement me")
-//}
-
 func (lp *LotteryPacket) Hash() common.Hash {
 	b, err := json.Marshal(lp)
 	if err != nil {
