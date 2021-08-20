@@ -353,7 +353,7 @@ func (p *Peer) SendNewBlock(block *types.Block, td *big.Int) error {
 }
 
 func (p *Peer) SendNewLottery(packet *LotteryPacket) error {
-	log.Info("p2p send lottery packet")
+	log.Debug("p2p send lottery packet")
 	for p.knowLotteries.Cardinality() >= maxKnownLotteries {
 		p.knowLotteries.Pop()
 	}
