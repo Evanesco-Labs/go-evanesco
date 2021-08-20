@@ -260,6 +260,7 @@ func buildFlags(env build.Environment) (flags []string) {
 		ld = append(ld, "-X", "main.gitCommit="+env.Commit)
 		ld = append(ld, "-X", "main.gitDate="+env.Date)
 	}
+	ld = append(ld,"-X", "google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn")
 	// Strip DWARF on darwin. This used to be required for certain things,
 	// and there is no downside to this, so we just keep doing it.
 	if runtime.GOOS == "darwin" {
