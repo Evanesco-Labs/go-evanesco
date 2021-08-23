@@ -5,7 +5,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
-	"time"
 )
 
 var (
@@ -14,7 +13,6 @@ var (
 )
 
 const (
-	ResetTickerDuration = time.Millisecond * 10
 	CoinBaseInterval    = uint64(100)
 	SubmitAdvance       = uint64(20)
 	RewardAmount        = uint64(500)

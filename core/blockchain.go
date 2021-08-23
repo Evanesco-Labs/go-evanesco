@@ -20,8 +20,8 @@ package core
 import (
 	"errors"
 	"fmt"
-	"github.com/Evanesco-Labs/miner/problem"
 	clique2 "github.com/ethereum/go-ethereum/consensus/clique"
+	"github.com/ethereum/go-ethereum/zkpminer/problem"
 	"io"
 	"math/big"
 	mrand "math/rand"

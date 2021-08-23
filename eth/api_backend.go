@@ -19,7 +19,7 @@ package eth
 import (
 	"context"
 	"errors"
-	evaminer "github.com/Evanesco-Labs/miner"
+	"github.com/ethereum/go-ethereum/zkpminer"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -343,7 +343,7 @@ func (b *EthAPIBackend) StartMining(threads int) error {
 	return b.eth.StartMining(threads)
 }
 
-func (b *EthAPIBackend) ZKPMiner() *evaminer.Miner {
+func (b *EthAPIBackend) ZKPMiner() *zkpminer.Miner {
 	return b.eth.zkpMiner
 }
 
