@@ -26,7 +26,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	evaminer "github.com/Evanesco-Labs/miner"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -56,6 +55,7 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/ethereum/go-ethereum/zkpminer"
 )
 
 // Config contains the configuration options of the ETH protocol.
@@ -95,7 +95,7 @@ type Ethereum struct {
 
 	p2pServer *p2p.Server
 
-	zkpMiner *evaminer.Miner
+	zkpMiner *zkpminer.Miner
 
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 }
@@ -447,13 +447,13 @@ func (s *Ethereum) SetEtherbase(etherbase common.Address) {
 	s.miner.SetEtherbase(etherbase)
 }
 
-func (s *Ethereum) StartZKPMiner(config evaminer.Config) error {
+func (s *Ethereum) StartZKPMiner(config zkpminer.Config) error {
 	_, ok := s.engine.(*clique.Clique)
 	if !ok {
 		return errors.New("start ZKP miner with not-clique engine")
 	}
 
-	zkpMiner, err := evaminer.NewLocalMiner(config, s)
+	zkpMiner, err := zkpminer.NewLocalMiner(config, s)
 	if err != nil {
 		return err
 	}

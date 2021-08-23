@@ -20,8 +20,8 @@ package utils
 import (
 	"crypto/ecdsa"
 	"fmt"
-	zkpminer "github.com/Evanesco-Labs/miner"
-	zkpkeypair "github.com/Evanesco-Labs/miner/keypair"
+	"github.com/ethereum/go-ethereum/zkpminer"
+	zkpkeypair "github.com/ethereum/go-ethereum/zkpminer/keypair"
 	"io"
 	"io/ioutil"
 	"math"

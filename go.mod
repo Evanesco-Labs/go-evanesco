@@ -5,7 +5,6 @@ go 1.15
 require (
 	github.com/Azure/azure-storage-blob-go v0.7.0
 	github.com/Evanesco-Labs/WhiteNoise v0.0.0-20210625105827-d332bd5842a5
-	github.com/Evanesco-Labs/miner v0.0.0-20210813130603-9307465d93ec
 	github.com/VictoriaMetrics/fastcache v1.6.0
 	github.com/aws/aws-sdk-go-v2 v1.2.0
 	github.com/aws/aws-sdk-go-v2/config v1.1.1
@@ -14,6 +13,7 @@ require (
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/cespare/cp v0.1.0
 	github.com/cloudflare/cloudflare-go v0.14.0
+	github.com/consensys/gnark v0.4.0
 	github.com/consensys/gnark-crypto v0.4.1-0.20210428083642-6bd055b79906
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deckarep/golang-set v0.0.0-20180603214616-504e848d77ea
@@ -52,6 +52,7 @@ require (
 	github.com/status-im/keycard-go v0.0.0-20190316090335-8537d3370df4
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
+	github.com/tklauser/go-sysconf v0.3.8 // indirect
 	github.com/tyler-smith/go-bip39 v1.0.1-0.20181017060643-dbb3b84ba2ef
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -64,7 +65,6 @@ require (
 )
 
 replace (
-	github.com/Evanesco-Labs/miner v0.0.0-20210813130603-9307465d93ec => /Users/houmy/Documents/eva/miner
 	github.com/consensys/gnark v0.4.0 => github.com/Evanesco-Labs/gnark v0.4.1-0.20210810081143-48fdd25c1073
 	github.com/consensys/gnark-crypto v0.4.1-0.20210428083642-6bd055b79906 => github.com/Evanesco-Labs/gnark-crypto v0.4.1-0.20210810075744-74f0c8ad40b3
 )
