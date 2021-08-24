@@ -11,7 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/zkpminer/keypair"
-	"github.com/ethereum/go-ethereum/zkpminer/log"
+	//"github.com/ethereum/go-ethereum/zkpminer/log"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/zkpminer/vrf"
 	"math/big"
 	"os"
@@ -71,7 +72,7 @@ func ZKPProve(r1cs frontend.CompiledConstraintSystem, pk groth16.ProvingKey, pre
 	c.Hash.Assign(mimchash)
 	proof, err := groth16.Prove(r1cs, pk, &c)
 	if err != nil {
-		log.Debug("groth16 error:", err.Error())
+		log.Debug("groth16 error:","err", err.Error())
 		return nil, nil
 	}
 	buf := bytes.Buffer{}
@@ -107,14 +108,14 @@ func (p *Prover) Prove(preimage []byte) ([]byte, []byte) {
 }
 
 func NewProblemProver(pkPath string) (*Prover, error) {
-	log.Debug("Compiling ZKP circuit")
+	log.Info("Compiling ZKP circuit")
 	r1cs := CompileCircuit()
 	pkFile, err := os.OpenFile(pkPath, os.O_RDONLY, 0644)
 	if err != nil {
 		return nil, ErrorInvalidPkPath
 	}
 	defer pkFile.Close()
-	log.Debug("Loading ZKP prove key. This takes a few minutes")
+	log.Info("Loading ZKP prove key. This takes a few minutes")
 	pk := groth16.NewProvingKey(ecc.BN254)
 	_, err = pk.ReadFrom(pkFile)
 	if err != nil {
@@ -170,19 +171,19 @@ func (v *Verifier) VerifyLottery(lottery *types.Lottery, sigBytes []byte, lastCo
 	}
 	msg, err := json.Marshal(lottery)
 	if err != nil {
-		log.Debug("marshal err", err)
+		log.Debug("marshal err", "err",err)
 		return false
 	}
 
 	msgHash := crypto.Keccak256(msg)
 	ecdsaPK, err := crypto.SigToPub(msgHash, sigBytes)
 	if err != nil {
-		log.Debug("sig to pub err", err)
+		log.Debug("sig to pub err", "err",err)
 		return false
 	}
 	pk, err := keypair.NewPublicKey(ecdsaPK)
 	if err != nil {
-		log.Debug("new pub key err", err)
+		log.Debug("new pub key err", "err",err)
 		return false
 	}
 
@@ -206,7 +207,7 @@ func (v *Verifier) VerifyLottery(lottery *types.Lottery, sigBytes []byte, lastCo
 	challengeHeight := lastCoinbaseHeader.Number.Uint64() + GetChallengeIndex(index, uint64(v.coinbaseInterval)-uint64(v.submitAdvance))
 	challengeHeader, err := v.getHeaderByNum(challengeHeight)
 	if err != nil || challengeHeader == nil {
-		log.Debug("get header err", challengeHeight)
+		log.Debug("get header err", "challenge height",challengeHeight)
 		return false
 	}
 

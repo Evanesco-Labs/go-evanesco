@@ -7,10 +7,11 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/zkpminer/keypair"
-	"github.com/ethereum/go-ethereum/zkpminer/log"
 	"github.com/ethereum/go-ethereum/zkpminer/problem"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -138,6 +139,7 @@ type Miner struct {
 }
 
 func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
+	runtime.GOMAXPROCS(1)
 	zkpProver, err := problem.NewProblemProver(config.PkPath)
 	if err != nil {
 		log.Error(err.Error())
@@ -191,6 +193,7 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 }
 
 func NewMiner(config Config) (*Miner, error) {
+	runtime.GOMAXPROCS(1)
 	zkpProver, err := problem.NewProblemProver(config.PkPath)
 	if err != nil {
 		log.Error(err.Error())
@@ -224,7 +227,7 @@ func NewMiner(config Config) (*Miner, error) {
 
 	go func() {
 		err := <-sub.Err()
-		log.Error(ErrorBlockHeaderSubscribe, err)
+		log.Error(ErrorBlockHeaderSubscribe.Error(), "err",err)
 		miner.Close()
 	}()
 

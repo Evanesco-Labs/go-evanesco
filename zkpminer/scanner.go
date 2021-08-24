@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/ethereum/go-ethereum/zkpminer/log"
 	"math/big"
 	"sync"
 	"time"
@@ -47,7 +47,7 @@ func (r *RpcExplorer) GetHeaderByNum(num uint64) *types.Header {
 	var head *types.Header
 	err := r.Client.CallContext(ctx, &head, "eth_getBlockByNumber", toBlockNumArg(new(big.Int).SetUint64(num)), false)
 	if err != nil {
-		log.Error(err)
+		log.Error("rpc call eth_getBlockByNumber error","err",err)
 		return nil
 	}
 	return head
@@ -107,11 +107,11 @@ func (s *Scanner) Loop() {
 		case <-s.exitCh:
 			return
 		case header := <-headerCh:
-			log.Debug("best score:", s.BestScore)
+			log.Debug("best score:","score", s.BestScore)
 			height := Height(header.Number.Uint64())
 			//index := height - s.LastCoinbaseHeight
 			index := Height(new(big.Int).Mod(header.Number, new(big.Int).SetUint64(uint64(s.CoinbaseInterval))).Uint64())
-			log.Info("chain height:", height, " index:", index)
+			log.Info("chain status","height", height, "index", index)
 
 			s.LastBlockHeight = height
 			if s.IfCoinBase(header) {
@@ -150,9 +150,9 @@ func (s *Scanner) Loop() {
 			}
 			if task.Step == TASKPROBLEMSOLVED {
 				taskScore := task.lottery.Score()
-				log.Debug("get solved score:", taskScore)
+				log.Debug("get solved score:", "score",taskScore)
 				if taskScore.Cmp(s.BestScore) != 1 {
-					log.Debug("less than best", s.BestScore)
+					log.Debug("less than best", "score",s.BestScore)
 					continue
 				}
 				s.BestScore = taskScore
@@ -185,9 +185,9 @@ func (s *Scanner) GetHeader(height Height) (*types.Header, error) {
 func (s *Scanner) Submit(task *Task) error {
 	// Submit check if the lottery has the best score
 	log.Info("submit work",
-		"\nminer address:", task.minerAddr,
-		"\ncoinbase address:", task.CoinbaseAddr,
-		"\nscore:", task.lottery.Score().String(),
+		"\nminer address", task.minerAddr,
+		"\ncoinbase address", task.CoinbaseAddr,
+		"\nscore", task.lottery.Score().String(),
 	)
 
 	if localExp, ok := s.explorer.(*LocalExplorer); ok {
@@ -197,7 +197,7 @@ func (s *Scanner) Submit(task *Task) error {
 		},
 		})
 		if err != nil {
-			log.Error("submit with local explorer", err)
+			log.Error("submit with local explorer", "err",err)
 		}
 		return nil
 	}
@@ -211,7 +211,7 @@ func (s *Scanner) Submit(task *Task) error {
 
 		err := rpcExp.Client.CallContext(ctx, nil, "eth_lotterySubmit", submit)
 		if err != nil {
-			log.Error("rpc submit lottery error:", err)
+			log.Error("rpc submit lottery error:", "err",err)
 		}
 		return err
 	}
