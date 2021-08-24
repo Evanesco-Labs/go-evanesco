@@ -286,7 +286,7 @@ func (w *wizard) readPassword() string {
 func (w *wizard) readAddress() *common.Address {
 	for {
 		// Read the address from the user
-		fmt.Printf("> Ex")
+		fmt.Printf("> 0x")
 		text, err := w.in.ReadString('\n')
 		if err != nil {
 			log.Crit("Failed to read user input", "err", err)
@@ -311,7 +311,7 @@ func (w *wizard) readAddress() *common.Address {
 func (w *wizard) readDefaultAddress(def common.Address) common.Address {
 	for {
 		// Read the address from the user
-		fmt.Printf("> Ex")
+		fmt.Printf("> 0x")
 		text, err := w.in.ReadString('\n')
 		if err != nil {
 			log.Crit("Failed to read user input", "err", err)
