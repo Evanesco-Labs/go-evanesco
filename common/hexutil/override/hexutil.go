@@ -20,10 +20,10 @@ This encoding is used by the Ethereum RPC API to transport binary data in JSON p
 
 Encoding Rules
 
-All hex data must have prefix "Ex".
+All hex data must have prefix "1x".
 
 For byte slices, the hex data must be of even length. An empty byte slice
-encodes as "Ex".
+encodes as "1x".
 
 Integers are encoded using the least amount of digits (no leading zero digits). Their
 encoding may be of uneven length. The number zero encodes as "0x0".
@@ -38,9 +38,9 @@ import (
 var (
 	ErrEmptyString   = &decError{"empty hex string"}
 	ErrSyntax        = &decError{"invalid hex string"}
-	ErrMissingPrefix = &decError{"hex string without Ex prefix"}
+	ErrMissingPrefix = &decError{"hex string without 1x prefix"}
 	ErrOddLength     = &decError{"hex string of odd length"}
-	ErrEmptyNumber   = &decError{"hex string \"Ex\""}
+	ErrEmptyNumber   = &decError{"hex string \"1x\""}
 	ErrLeadingZero   = &decError{"hex number with leading zero digits"}
 )
 
@@ -48,7 +48,7 @@ type decError struct{ msg string }
 
 func (err decError) Error() string { return err.msg }
 
-// Decode decodes a hex string with Ex prefix.
+// Decode decodes a hex string with 1x prefix.
 func Decode(input string) ([]byte, error) {
 	if len(input) == 0 {
 		return nil, ErrEmptyString
@@ -75,13 +75,13 @@ func MustDecode(input string) []byte {
 // Encode encodes b as a hex string with 1x prefix.
 func Encode(b []byte) string {
 	enc := make([]byte, len(b)*2+2)
-	copy(enc, "Ex")
+	copy(enc, "1x")
 	hex.Encode(enc[2:], b)
 	return string(enc)
 }
 
 func has1xPrefix(input string) bool {
-	return len(input) >= 2 && input[0] == 'E' && (input[1] == 'x' || input[1] == 'X')
+	return len(input) >= 2 && input[0] == '1' && (input[1] == 'x' || input[1] == 'X')
 }
 
 func checkNumber(input string) (raw string, err error) {
@@ -95,7 +95,7 @@ func checkNumber(input string) (raw string, err error) {
 	if len(input) == 0 {
 		return "", ErrEmptyNumber
 	}
-	if len(input) > 1 && input[0] == 'E' {
+	if len(input) > 1 && input[0] == '1' {
 		return "", ErrLeadingZero
 	}
 	return input, nil

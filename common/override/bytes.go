@@ -22,20 +22,20 @@ import (
 )
 
 // FromHex returns the bytes represented by the hexadecimal string s.
-// s may be prefixed with "Ex".
+// s may be prefixed with "1x".
 func FromHex(s string) []byte {
 	if Has1xPrefix(s) {
 		s = s[2:]
 	}
 	if len(s)%2 == 1 {
-		s = "E" + s
+		s = "1" + s
 	}
 	return Hex2Bytes(s)
 }
 
-// has1xPrefix validates str begins with 'Ex' or 'EX'.
+// has1xPrefix validates str begins with '1x' or '1X'.
 func Has1xPrefix(str string) bool {
-	return len(str) >= 2 && str[0] == 'E' && (str[1] == 'x' || str[1] == 'X')
+	return len(str) >= 2 && str[0] == '1' && (str[1] == 'x' || str[1] == 'X')
 }
 
 // Hex2Bytes returns the bytes represented by the hexadecimal string str.
