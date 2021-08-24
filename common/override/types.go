@@ -28,7 +28,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	hexutil "github.com/ethereum/go-ethereum/common/hexutil/override"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -89,7 +89,7 @@ func (h Hash) String() string {
 // Hash supports the %v, %s, %v, %x, %X and %d format verbs.
 func (h Hash) Format(s fmt.State, c rune) {
 	hexb := make([]byte, 2+len(h)*2)
-	copy(hexb, "0x")
+	copy(hexb, "1x")
 	hex.Encode(hexb[2:], h[:])
 
 	switch c {
@@ -182,10 +182,10 @@ func (h *Hash) UnmarshalGraphQL(input interface{}) error {
 	return err
 }
 
-// UnprefixedHash allows marshaling a Hash without 0x prefix.
+// UnprefixedHash allows marshaling a Hash without 1x prefix.
 type UnprefixedHash Hash
 
-// UnmarshalText decodes the hash from hex. The 0x prefix is optional.
+// UnmarshalText decodes the hash from hex. The 1x prefix is optional.
 func (h *UnprefixedHash) UnmarshalText(input []byte) error {
 	return hexutil.UnmarshalFixedUnprefixedText("UnprefixedHash", input, h[:])
 }
@@ -219,7 +219,7 @@ func HexToAddress(s string) Address { return BytesToAddress(FromHex(s)) }
 // IsHexAddress verifies whether a string can represent a valid hex-encoded
 // Ethereum address or not.
 func IsHexAddress(s string) bool {
-	if has0xPrefix(s) {
+	if has1xPrefix(s) {
 		s = s[2:]
 	}
 	return len(s) == 2*AddressLength && isHex(s)
@@ -264,7 +264,7 @@ func (a *Address) checksumHex() []byte {
 
 func (a Address) hex() []byte {
 	var buf [len(a)*2 + 2]byte
-	copy(buf[:2], "0x")
+	copy(buf[:2], "1x")
 	hex.Encode(buf[2:], a[:])
 	return buf[:]
 }
@@ -354,10 +354,10 @@ func (a *Address) UnmarshalGraphQL(input interface{}) error {
 	return err
 }
 
-// UnprefixedAddress allows marshaling an Address without 0x prefix.
+// UnprefixedAddress allows marshaling an Address without 1x prefix.
 type UnprefixedAddress Address
 
-// UnmarshalText decodes the address from hex. The 0x prefix is optional.
+// UnmarshalText decodes the address from hex. The 1x prefix is optional.
 func (a *UnprefixedAddress) UnmarshalText(input []byte) error {
 	return hexutil.UnmarshalFixedUnprefixedText("UnprefixedAddress", input, a[:])
 }
@@ -398,10 +398,10 @@ func (ma *MixedcaseAddress) UnmarshalJSON(input []byte) error {
 
 // MarshalJSON marshals the original value
 func (ma *MixedcaseAddress) MarshalJSON() ([]byte, error) {
-	if strings.HasPrefix(ma.original, "0x") || strings.HasPrefix(ma.original, "0X") {
-		return json.Marshal(fmt.Sprintf("0x%s", ma.original[2:]))
+	if strings.HasPrefix(ma.original, "1x") || strings.HasPrefix(ma.original, "1X") {
+		return json.Marshal(fmt.Sprintf("1x%s", ma.original[2:]))
 	}
-	return json.Marshal(fmt.Sprintf("0x%s", ma.original))
+	return json.Marshal(fmt.Sprintf("1x%s", ma.original))
 }
 
 // Address returns the address
