@@ -776,7 +776,7 @@ func TestUnpackEventIntoMap(t *testing.T) {
 
 	receivedMap := map[string]interface{}{}
 	expectedReceivedMap := map[string]interface{}{
-		"sender": common.HexToAddress("Ex376c47978271565f56DEB45495afa69E59c16Ab2"),
+		"sender": common.HexToAddress("0x376c47978271565f56DEB45495afa69E59c16Ab2"),
 		"amount": big.NewInt(1),
 		"memo":   []byte{88},
 	}
@@ -920,7 +920,7 @@ func TestUnpackIntoMapNamingConflict(t *testing.T) {
 		t.Errorf("len(data) is %d, want a non-multiple of 32", len(data))
 	}
 	expectedReceivedMap := map[string]interface{}{
-		"sender": common.HexToAddress("Ex376c47978271565f56DEB45495afa69E59c16Ab2"),
+		"sender": common.HexToAddress("0x376c47978271565f56DEB45495afa69E59c16Ab2"),
 		"amount": big.NewInt(1),
 		"memo":   []byte{88},
 	}

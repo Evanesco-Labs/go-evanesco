@@ -134,17 +134,17 @@ var jsonTypedData = `
         "name": "Ether Mail",
         "version": "1",
         "chainId": "1",
-        "verifyingContract": "ExCCCcccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+        "verifyingContract": "0xCCCcccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
       },
       "message": {
         "from": {
           "name": "Cow",
 		  "test": 3,
-          "wallet": "ExcD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+          "wallet": "0xcD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
         },
         "to": {
           "name": "Bob",
-          "wallet": "ExbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+          "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
         },
         "contents": "Hello, Bob!"
       }
@@ -157,18 +157,18 @@ var domainStandard = core.TypedDataDomain{
 	"Ether Mail",
 	"1",
 	math.NewHexOrDecimal256(1),
-	"ExCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+	"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
 	"",
 }
 
 var messageStandard = map[string]interface{}{
 	"from": map[string]interface{}{
 		"name":   "Cow",
-		"wallet": "ExCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
+		"wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
 	},
 	"to": map[string]interface{}{
 		"name":   "Bob",
-		"wallet": "ExbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+		"wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
 	},
 	"contents": "Hello, Bob!",
 }
@@ -436,35 +436,35 @@ var gnosisTypedData = `
 		]
 	},
 	"domain": {
-		"verifyingContract": "Ex25a6c4BBd32B2424A9c99aEB0584Ad12045382B3"
+		"verifyingContract": "0x25a6c4BBd32B2424A9c99aEB0584Ad12045382B3"
 	},
 	"primaryType": "SafeTx",
 	"message": {
-		"to": "Ex9eE457023bB3De16D51A003a247BaEaD7fce313D",
+		"to": "0x9eE457023bB3De16D51A003a247BaEaD7fce313D",
 		"value": "20000000000000000",
 		"data": "0x",
 		"operation": 0,
 		"safeTxGas": 27845,
 		"baseGas": 0,
 		"gasPrice": "0",
-		"gasToken": "Ex0000000000000000000000000000000000000000",
-		"refundReceiver": "Ex0000000000000000000000000000000000000000",
+		"gasToken": "0x0000000000000000000000000000000000000000",
+		"refundReceiver": "0x0000000000000000000000000000000000000000",
 		"nonce": 3
 	}
 }`
 
 var gnosisTx = `
 {
-      "safe": "Ex25a6c4BBd32B2424A9c99aEB0584Ad12045382B3",
-      "to": "Ex9eE457023bB3De16D51A003a247BaEaD7fce313D",
+      "safe": "0x25a6c4BBd32B2424A9c99aEB0584Ad12045382B3",
+      "to": "0x9eE457023bB3De16D51A003a247BaEaD7fce313D",
       "value": "20000000000000000",
       "data": null,
       "operation": 0,
-      "gasToken": "Ex0000000000000000000000000000000000000000",
+      "gasToken": "0x0000000000000000000000000000000000000000",
       "safeTxGas": 27845,
       "baseGas": 0,
       "gasPrice": "0",
-      "refundReceiver": "Ex0000000000000000000000000000000000000000",
+      "refundReceiver": "0x0000000000000000000000000000000000000000",
       "nonce": 3,
       "executionDate": null,
       "submissionDate": "2020-09-15T21:59:23.815748Z",
@@ -483,7 +483,7 @@ var gnosisTx = `
       "confirmationsRequired": null,
       "confirmations": [
         {
-          "owner": "ExAd2e180019FCa9e55CADe76E4487F126Fd08DA34",
+          "owner": "0xAd2e180019FCa9e55CADe76E4487F126Fd08DA34",
           "submissionDate": "2020-09-15T21:59:28.281243Z",
           "transactionHash": null,
           "confirmationType": "CONFIRMATION",

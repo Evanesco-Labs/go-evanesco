@@ -96,7 +96,7 @@ func TestEIP1559BlockEncoding(t *testing.T) {
 	tx1 := NewTransaction(0, common.HexToAddress("095e7baea6a6c7c4c2dfeb977efac326af552d87"), big.NewInt(10), 50000, big.NewInt(10), nil)
 	tx1, _ = tx1.WithSignature(HomesteadSigner{}, common.Hex2Bytes("9bea4c4daac7c7c52e093e6a4c35dbbcf8856f1af7b059ba20253e70848d094f8a8fae537ce25ed8cb5af9adac3f141af69bd515bd2ba031522df09b97dd72b100"))
 
-	addr := common.HexToAddress("Ex0000000000000000000000000000000000000001")
+	addr := common.HexToAddress("0x0000000000000000000000000000000000000001")
 	accesses := AccessList{AccessTuple{
 		Address: addr,
 		StorageKeys: []common.Hash{
@@ -168,7 +168,7 @@ func TestEIP2718BlockEncoding(t *testing.T) {
 	tx1, _ = tx1.WithSignature(HomesteadSigner{}, sig)
 
 	// Create ACL tx.
-	addr := common.HexToAddress("Ex0000000000000000000000000000000000000001")
+	addr := common.HexToAddress("0x0000000000000000000000000000000000000001")
 	tx2 := NewTx(&AccessListTx{
 		ChainID:    big.NewInt(1),
 		Nonce:      0,

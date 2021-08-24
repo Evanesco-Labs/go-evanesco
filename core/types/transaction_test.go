@@ -413,7 +413,7 @@ func TestTransactionCoding(t *testing.T) {
 	}
 	var (
 		signer    = NewEIP2930Signer(common.Big1)
-		addr      = common.HexToAddress("Ex0000000000000000000000000000000000000001")
+		addr      = common.HexToAddress("0x0000000000000000000000000000000000000001")
 		recipient = common.HexToAddress("095e7baea6a6c7c4c2dfeb977efac326af552d87")
 		accesses  = AccessList{{Address: addr, StorageKeys: []common.Hash{{0}}}}
 	)
