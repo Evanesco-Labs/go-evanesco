@@ -31,7 +31,7 @@ func TestFacebook(t *testing.T) {
 	}{
 		{
 			"https://www.facebook.com/fooz.gazonk/posts/2837228539847129",
-			common.HexToAddress("ExDeadDeaDDeaDbEefbEeFbEEfBeeFBeefBeeFbEEF"),
+			common.HexToAddress("0xDeadDeaDDeaDbEefbEeFbEEfBeeFBeefBeeFbEEF"),
 		},
 	} {
 		_, _, gotAddress, err := authFacebook(tt.url)

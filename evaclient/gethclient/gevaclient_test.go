@@ -177,7 +177,7 @@ func testAccessList(t *testing.T, client *rpc.Client) {
 		t.Fatalf("unexpected length of accesslist: %v", len(*al))
 	}
 	// address changes between calls, so we can't test for it.
-	if (*al)[0].Address == common.HexToAddress("Ex0") {
+	if (*al)[0].Address == common.HexToAddress("0x0") {
 		t.Fatalf("unexpected address: %v", (*al)[0].Address)
 	}
 	if (*al)[0].StorageKeys[0] != common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000081") {

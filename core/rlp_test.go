@@ -33,7 +33,7 @@ import (
 
 func getBlock(transactions int, uncles int, dataSize int) *types.Block {
 	var (
-		aa = common.HexToAddress("Ex000000000000000000000000000000000000aaaa")
+		aa = common.HexToAddress("0x000000000000000000000000000000000000aaaa")
 		// Generate a canonical chain to act as the main dataset
 		engine = ethash.NewFaker()
 		db     = rawdb.NewMemoryDatabase()

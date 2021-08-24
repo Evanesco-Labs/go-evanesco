@@ -511,7 +511,7 @@ func TestCopyCommitCopy(t *testing.T) {
 	state, _ := New(common.Hash{}, NewDatabase(rawdb.NewMemoryDatabase()), nil)
 
 	// Create an account and check if the retrieved balance is correct
-	addr := common.HexToAddress("Exaffeaffeaffeaffeaffeaffeaffeaffeaffeaffe")
+	addr := common.HexToAddress("0xaffeaffeaffeaffeaffeaffeaffeaffeaffeaffe")
 	skey := common.HexToHash("aaa")
 	sval := common.HexToHash("bbb")
 
@@ -583,7 +583,7 @@ func TestCopyCopyCommitCopy(t *testing.T) {
 	state, _ := New(common.Hash{}, NewDatabase(rawdb.NewMemoryDatabase()), nil)
 
 	// Create an account and check if the retrieved balance is correct
-	addr := common.HexToAddress("Exaffeaffeaffeaffeaffeaffeaffeaffeaffeaffe")
+	addr := common.HexToAddress("0xaffeaffeaffeaffeaffeaffeaffeaffeaffeaffe")
 	skey := common.HexToHash("aaa")
 	sval := common.HexToHash("bbb")
 

@@ -103,7 +103,7 @@ func TestExecute(t *testing.T) {
 
 func TestCall(t *testing.T) {
 	state, _ := state.New(common.Hash{}, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
-	address := common.HexToAddress("Ex0a")
+	address := common.HexToAddress("0x0a")
 	state.SetCode(address, []byte{
 		byte(vm.PUSH1), 10,
 		byte(vm.PUSH1), 0,
@@ -213,7 +213,7 @@ func BenchmarkEVM_CREATE2_1200(bench *testing.B) {
 
 func fakeHeader(n uint64, parentHash common.Hash) *types.Header {
 	header := types.Header{
-		Coinbase:   common.HexToAddress("Ex00000000000000000000000000000000deadbeef"),
+		Coinbase:   common.HexToAddress("0x00000000000000000000000000000000deadbeef"),
 		Number:     big.NewInt(int64(n)),
 		ParentHash: parentHash,
 		Time:       1000,
