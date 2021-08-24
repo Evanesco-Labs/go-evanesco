@@ -5,8 +5,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/zkpminer/keypair"
-	"github.com/ethereum/go-ethereum/zkpminer/log"
 	"github.com/ethereum/go-ethereum/zkpminer/problem"
 	"github.com/ethereum/go-ethereum/zkpminer/vrf"
 	"sync"
@@ -103,7 +103,7 @@ func (w *Worker) HandleStartTask(task *Task) error {
 	task.lottery.Index = index
 	task.Step = TASKWAITCHALLENGEBLOCK
 
-	log.Info("vrf finished","challenge height:", w.scanner.LastCoinbaseHeight+task.challengeIndex, "index:", task.challengeIndex)
+	log.Info("vrf finished", "challenge height:", w.scanner.LastCoinbaseHeight+task.challengeIndex, "index:", task.challengeIndex)
 
 	// request if this block already exit
 	header, err := w.scanner.GetHeader(w.scanner.LastCoinbaseHeight + task.challengeIndex)
@@ -120,7 +120,7 @@ func (w *Worker) HandleChallengedTask(task *Task) error {
 	// start zkp proof
 	err := w.SolveProblem(task)
 	if err != nil {
-		log.Error(err)
+		log.Error("solve zkp problem error", "err", err)
 		return err
 	}
 	log.Info("ZKP problem finished")
@@ -136,7 +136,7 @@ func (w *Worker) HandleTaskAfterChallenge(header *types.Header, task *Task) erro
 }
 
 func (w *Worker) HandlerTaskBeforeChallenge(task *Task) error {
-	log.Debug("handle task before challenge, index ", task.challengeIndex)
+	log.Debug("handle task before challenge","index", task.challengeIndex)
 	task.Step = TASKWAITCHALLENGEBLOCK
 	w.scanner.inboundTaskCh <- task
 	return nil
@@ -175,7 +175,6 @@ func (w *Worker) SignLottery(task *Task) error {
 	if err != nil {
 		return err
 	}
-	copy(task.signature[:],sig)
+	copy(task.signature[:], sig)
 	return nil
 }
-

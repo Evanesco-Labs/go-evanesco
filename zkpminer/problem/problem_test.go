@@ -9,9 +9,8 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
-	"github.com/ethereum/go-ethereum/zkpminer/log"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"runtime"
 	"testing"
 	"time"
@@ -47,12 +46,11 @@ func TestZKP(t *testing.T) {
 }
 
 func TestCircuit(t *testing.T) {
-	log.InitLog(0, os.Stdout, log.PATH)
 	runtime.GOMAXPROCS(1)
 	var mimcCircuit Circuit
 
 	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &mimcCircuit)
-	log.Debug("constraints:", r1cs.GetNbConstraints())
+	log.Debug("constraints:","number", r1cs.GetNbConstraints())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,16 +60,16 @@ func TestCircuit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	log.Debug("setup time:", time.Now().Sub(startTime).String())
+	log.Debug("setup time:", "duration",time.Now().Sub(startTime).String())
 
 	{
 		buf := bytes.Buffer{}
 		n, err := pk.WriteTo(&buf)
-		log.Debug("pk size:", n)
+		log.Debug("pk size:", "size",n)
 
 		buf = bytes.Buffer{}
 		n, err = vk.WriteTo(&buf)
-		log.Debug("vk size:", n)
+		log.Debug("vk size:","size", n)
 
 		var witness Circuit
 
@@ -96,12 +94,12 @@ func TestCircuit(t *testing.T) {
 			t.Fatal(err)
 		}
 		duration := time.Now().Sub(start).String()
-		log.Debug("prove time:", duration)
+		log.Debug("prove time:","duration", duration)
 
 		buf = bytes.Buffer{}
 		_, err = proof.WriteTo(&buf)
 		if err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 		}
 
 		var witnessV Circuit
@@ -112,7 +110,7 @@ func TestCircuit(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		log.Debug("verify time:", time.Now().Sub(start).String())
+		log.Debug("verify time:", "duration",time.Now().Sub(start).String())
 	}
 }
 

@@ -5,10 +5,9 @@ import (
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/zkpminer/keypair"
-	"github.com/ethereum/go-ethereum/zkpminer/log"
-	"os"
 	"testing"
 	"time"
 )
@@ -37,8 +36,6 @@ func DefaultTestConfig() Config {
 }
 
 func TestMiner(t *testing.T) {
-	log.InitLog(0, os.Stdout, log.PATH)
-
 	minerList := make([]keypair.Key, 0)
 	{
 		_, sk := keypair.GenerateKeyPair()
@@ -62,7 +59,7 @@ func TestMiner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	log.Debug("coinbase address:", miner.scanner.CoinbaseAddr)
+	log.Debug("coinbase address:", "coinbase address",miner.scanner.CoinbaseAddr)
 
 	//add another worker
 	time.Sleep(time.Second * 20)
