@@ -23,3 +23,5 @@ build/
 test/
 
 rebuild.sh
+
+gencodec
