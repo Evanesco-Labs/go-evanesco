@@ -13,9 +13,9 @@ var (
 )
 
 const (
-	CoinBaseInterval    = uint64(100)
-	SubmitAdvance       = uint64(20)
-	RewardAmount        = uint64(500)
+	CoinBaseInterval = uint64(100)
+	SubmitAdvance    = uint64(20)
+	RewardAmount     = uint64(500)
 )
 
 type ZKPReward struct {
@@ -36,6 +36,34 @@ type Lottery struct {
 	MimcHash            []byte         `json:"mimc_hash"` //32 bytes
 	ZkpProof            []byte         `json:"zkp_proof"`
 	VrfProof            []byte         `json:"vrf_proof"`
+}
+
+func (l *Lottery) DeepCopy() Lottery {
+	cpLottery := Lottery{
+		CoinbaseAddr:        l.CoinbaseAddr,
+		MinerAddr:           l.MinerAddr,
+		ChallengeHeaderHash: l.ChallengeHeaderHash,
+		Index:               l.Index,
+		MimcHash:            make([]byte, 0),
+		ZkpProof:            make([]byte, 0),
+		VrfProof:            make([]byte, 0),
+	}
+
+	if l.MimcHash != nil {
+		cpLottery.MimcHash = make([]byte, len(l.MimcHash))
+		copy(cpLottery.MimcHash, l.MimcHash)
+	}
+
+	if l.ZkpProof != nil {
+		cpLottery.ZkpProof = make([]byte, len(l.ZkpProof))
+		copy(cpLottery.ZkpProof, l.ZkpProof)
+	}
+
+	if l.VrfProof != nil {
+		cpLottery.VrfProof = make([]byte, len(l.VrfProof))
+		copy(cpLottery.VrfProof, l.VrfProof)
+	}
+	return cpLottery
 }
 
 func (l *Lottery) SetMinerAddr(addr common.Address) {

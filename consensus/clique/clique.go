@@ -606,12 +606,8 @@ func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 
 	// Add best lottery to block header
 	if header.IsZKPRewardBlock() {
-		header.ZKPReward = types.ZKPReward{
-			CoinbaseAddr: c.bestLottery.CoinbaseAddr,
-			Score:        c.bestLottery.ScoreBytes(),
-		}
+		header.BestLottery = c.bestLottery.DeepCopy()
 	}
-
 	return nil
 }
 
@@ -622,9 +618,9 @@ func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Heade
 	log.Debug("finalized block", "number", header.Number)
 	empty := common.Address{}
 	if header.IsZKPRewardBlock() {
-		if header.ZKPReward.CoinbaseAddr != empty {
+		if header.BestLottery.CoinbaseAddr != empty {
 			c.ResetBestLotteryandScore()
-			state.AddBalance(header.ZKPReward.CoinbaseAddr, new(big.Int).SetUint64(types.RewardAmount))
+			state.AddBalance(header.BestLottery.CoinbaseAddr, new(big.Int).SetUint64(types.RewardAmount))
 		}
 	}
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
@@ -767,7 +763,7 @@ func (c *Clique) APIs(chain consensus.ChainHeaderReader) []rpc.API {
 // SealHash returns the hash of a block prior to it being sealed.
 func SealHash(header *types.Header) (hash common.Hash) {
 	hasher := sha3.NewLegacyKeccak256()
-	encodeSigHeaderWithoutReward(hasher, header)
+	encodeSigHeaderWithReward(hasher, header)
 	hasher.Sum(hash[:0])
 	return hash
 }
@@ -781,7 +777,7 @@ func SealHash(header *types.Header) (hash common.Hash) {
 // or not), which could be abused to produce different hashes for the same header.
 func CliqueRLP(header *types.Header) []byte {
 	b := new(bytes.Buffer)
-	encodeSigHeaderWithoutReward(b, header)
+	encodeSigHeaderWithReward(b, header)
 	return b.Bytes()
 }
 
@@ -802,7 +798,7 @@ func encodeSigHeaderWithReward(w io.Writer, header *types.Header) {
 		header.Extra[:len(header.Extra)-crypto.SignatureLength], // Yes, this will panic if extra is too short
 		header.MixDigest,
 		header.Nonce,
-		header.ZKPReward,
+		header.BestLottery,
 	}
 	if header.BaseFee != nil {
 		enc = append(enc, header.BaseFee)

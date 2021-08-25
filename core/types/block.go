@@ -82,7 +82,7 @@ type Header struct {
 	Extra       []byte         `json:"extraData"        gencodec:"required"`
 	MixDigest   common.Hash    `json:"mixHash"`
 	Nonce       BlockNonce     `json:"nonce"`
-	ZKPReward   ZKPReward      `json:"zkp_reward"`
+	BestLottery Lottery        `json:"best_lottery"`
 
 	// BaseFee was added by EIP-1559 and is ignored in legacy headers.
 	BaseFee *big.Int `json:"baseFeePerGas" rlp:"optional"`
@@ -241,6 +241,7 @@ func CopyHeader(h *Header) *Header {
 		cpy.Extra = make([]byte, len(h.Extra))
 		copy(cpy.Extra, h.Extra)
 	}
+	cpy.BestLottery = h.BestLottery.DeepCopy()
 	return &cpy
 }
 
