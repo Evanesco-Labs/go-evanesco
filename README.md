@@ -69,21 +69,6 @@ or, to build the full suite of utilities:
 make all
 ```
 
-## Executables
-
-The evanesco project comes with several wrappers/executables found in the `cmd`
-directory.
-
-|    Command    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| :-----------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  **`eva`**   | Evanesco Main Chain client binary. It is the entry point into the Evanesco network (main-, test- or private net), capable of running as a full node (default), archive node (retaining all historical state) or a light node (retrieving data live). It has the same and more RPC and other interface as go-ethereum and can be used by other processes as a gateway into the Evanesco network via JSON RPC endpoints exposed on top of HTTP, WebSocket and/or IPC transports. `eva --help` and the [CLI page](https://geth.ethereum.org/docs/interface/command-line-options) for command line options.          |
-|   `clef`      | Stand-alone signing tool, which can be used as a backend signer for `eva`.  |
-|   `devp2p`    | Utilities to interact with nodes on the networking layer, without running a full blockchain. |
-|   `abigen`    | Source code generator to convert Ethereum contract definitions into easy to use, compile-time type-safe Go packages. It operates on plain [Ethereum contract ABIs](https://docs.soliditylang.org/en/develop/abi-spec.html) with expanded functionality if the contract bytecode is also available. However, it also accepts Solidity source files, making development much more streamlined. 
-|  `bootnode`   | Stripped down version of our Ethereum client implementation that only takes part in the network node discovery protocol, but does not run any of the higher level application protocols. It can be used as a lightweight bootstrap node to aid in finding peers in private networks.                                                                                                                                                                                                                                                                 |
-|     `evm`     | Developer utility version of the EVM (Ethereum Virtual Machine) that is capable of running bytecode snippets within a configurable environment and execution mode. Its purpose is to allow isolated, fine-grained debugging of EVM opcodes (e.g. `evm --code 60ff60ff --debug run`).                                                                                                                                                                                                                                                                     |
-|   `rlpdump`   | Developer utility tool to convert binary RLP ([Recursive Length Prefix](https://eth.wiki/en/fundamentals/rlp)) dumps (data encoding used by the Ethereum protocol both network as well as consensus wise) to user-friendlier hierarchical representation (e.g. `rlpdump --hex CE0183FFFFFFC4C304050583616263`).                                                                                                                                                                                                                                 |
-
 ## Running `eva`
 
 Going through all the possible command line flags is out of scope here,
@@ -99,22 +84,66 @@ The hardware must meet certain requirements to run a full node.
 - 4 cores of CPU and 8 gigabytes of memory (RAM) for testnet.
 - A broadband Internet connection with upload/download speeds of at least 10 megabyte per second
 
+### Run Full node to Join Avis TestNet
+
+#### 1. Preparation
+First, go to the source code directory `go-evaneso` and follow the instruction above to build `eva`.
+Then, make a new directory. Here we name this new directory `avisnode`.
 ```shell
-$ eva console
+mkdir avisnode
+```
+Copy these 4 files into `avisnode` with this command: 
+```shell
+cp ./build/bin/eva ./avisnode
+cp ./verifykey.txt ./avisnode
+cp ./avis.json ./avisnode
+cp ./avis.toml ./avisnode
+```
+Make a new directory to store blockchain data with this command:
+```shell
+mkdir data
 ```
 
-This command will:
-* Start `eva` in fast sync mode (default, can be changed with the `--syncmode` flag),
-  causing it to download more data in exchange for avoiding processing the entire history
-  of the Evanesco Main Chain network, which is very CPU intensive.
-* Start up `eva`'s built-in interactive, just as ethereum tool geth: [JavaScript console](https://geth.ethereum.org/docs/interface/javascript-console),
-  (via the trailing `console` subcommand) through which you can interact using [`web3` methods](https://web3js.readthedocs.io/en/)
-  This tool is optional and if you leave it out you can always attach to an already running
-  `eva` instance with `eva attach`.
+#### 2. Generate account
+Generate a new account with this command, and remember the password you entered for this account:
+```shell
+./eva --datadir data account new
+```
 
-### A Full node on the α test network
+#### 3. Init genesis block
+Init genesis block with this command:
+```shell
+./eva --datadir data init ./avis.json
+```
 
-TBD
+####4. Startup full node
+Start up full node with this command:
+```shell
+./eva --datadir ./data --syncmode 'full' --port 30303 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8545 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7777 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./avis.toml
+```
+
+This will connect your node to the Avis TestNet, logs like the following will be printed:
+```shell
+INFO [08-25|20:25:23.922] Block synchronisation started 
+INFO [08-25|20:25:24.861] Downloader queue stats                   receiptTasks=0 blockTasks=0 itemSize=592.71B throttle=8192
+INFO [08-25|20:25:24.863] Imported new chain segment               blocks=11 txs=0 mgas=0.000 elapsed=1.809ms mgasps=0.000 number=495 hash=f90dce..88cb1c dirty=0.00B      ignored=1
+INFO [08-25|20:25:25.630] Imported new chain segment               blocks=1  txs=0 mgas=0.000 elapsed="293.044µs" mgasps=0.000 number=496 hash=a9e7a8..46b0bc dirty=0.00B
+INFO [08-25|20:25:31.130] Imported new chain segment               blocks=1  txs=0 mgas=0.000 elapsed="462.746µs" mgasps=0.000 number=497 hash=2beba7..83b028 dirty=0.00B
+INFO [08-25|20:25:37.128] Imported new chain segment               blocks=1  txs=0 mgas=0.000 elapsed="216.098µs" mgasps=0.000 number=498 hash=fef60d..a92615 dirty=0.00B
+INFO [08-25|20:25:43.612] Imported new chain segment               blocks=1  txs=0 mgas=0.000 elapsed="725.186µs" mgasps=0.000 number=499 hash=0043f8..05f977 dirty=0.00B
+```
+The http RPC port is 8545 and the WebSocket rpc port is 7777. Try use RPC request to check block number with this command:
+```shell
+curl --location --request POST 'localhost:8545/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+	"jsonrpc":"2.0",
+	"method":"eth_blockNumber",
+	"params":[],
+	"id":83
+}'
+```
+
 
 ### Configuration
 
