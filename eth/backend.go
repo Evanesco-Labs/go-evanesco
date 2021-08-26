@@ -195,7 +195,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	)
 	//add verify key path
 	if chainConfig != nil {
-		log.Info("copy:",config.ZKPVkPath)
 		chainConfig.Clique.VKPath = config.ZKPVkPath
 	}
 

@@ -79,9 +79,8 @@ on how you can run your own `eva` instance.
 
 The hardware must meet certain requirements to run a full node.
 - VPS running recent versions of Mac OS X or Linux.
-- 1T of SSD storage for mainnet, 500G of SSD storage for testnet.
-- 8 cores of CPU and 32 gigabytes of memory (RAM) for mainnet.
-- 4 cores of CPU and 8 gigabytes of memory (RAM) for testnet.
+- 100G of SSD storage for Avis testnet and another 10G if you start miner on full node.
+- 2 gigabytes of memory (RAM) for Avis testnet and another 4 gigabytes of memory (RAM) if you start miner on full node.
 - A broadband Internet connection with upload/download speeds of at least 10 megabyte per second
 
 ### Run Full node to Join Avis TestNet
@@ -104,19 +103,19 @@ Make a new directory to store blockchain data with this command:
 mkdir data
 ```
 
-#### 2. Generate account
+#### 2. Generate Account
 Generate a new account with this command, and remember the password you entered for this account:
 ```shell
 ./eva --datadir data account new
 ```
 
-#### 3. Init genesis block
+#### 3. Init Genesis Block
 Init genesis block with this command:
 ```shell
 ./eva --datadir data init ./avis.json
 ```
 
-####4. Startup full node
+####4. Start Full Node 
 Start up full node with this command:
 ```shell
 ./eva --datadir ./data --syncmode 'full' --port 30303 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8545 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7777 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./avis.toml
@@ -144,6 +143,21 @@ curl --location --request POST 'localhost:8545/' \
 }'
 ```
 
+####5. Start Full Node with Miner
+Before starting to mine, you also need to download a ZKP prove key file `provekey.txt`. This is a unique ZKP prove key, and miner have to load this ZKP prove key to start GPow working.
+
+Please download from IPFS, IPFS CID:
+
+Copy this file to the `avisnode` directory, and start full node and miner with this command:
+```shell
+./eva --datadir ./data --syncmode 'full' --port 30303 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8545 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7777 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./provekey.txt --zkpvkpath ./verifykey.txt --config ./avis.toml
+```
+
+This command will start miner with the account you just created and send reward to this address if your mining work has the best score.
+
+Set flag `--zkpkeypath` the path of your keyfile, if you want to derive miner address from this keyfile.
+
+Set flag `----zkpcoinbase` the coinbase address, if you want to receive mining rewards to this address.  
 
 ### Configuration
 
