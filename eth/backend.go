@@ -195,6 +195,13 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	)
 	//add verify key path
 	if chainConfig != nil {
+		if chainConfig.Clique== nil {
+			chainConfig.Clique = &params.CliqueConfig{
+				Period: 6,
+				Epoch:  3000,
+				VKPath: "./verifykey.txt",
+			}
+		}
 		chainConfig.Clique.VKPath = config.ZKPVkPath
 	}
 
