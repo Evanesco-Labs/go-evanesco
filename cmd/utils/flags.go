@@ -1622,8 +1622,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 
 	//set vkpath
 	if ctx.GlobalIsSet(ZKPVkPath.Name) {
-		log.Info("print vkpath")
-		log.Info(ctx.GlobalString(ZKPVkPath.Name))
 		cfg.ZKPVkPath = ctx.GlobalString(ZKPVkPath.Name)
 	}
 
