@@ -436,7 +436,7 @@ func (h *handler) Stop() {
 	h.peers.close()
 	h.peerWG.Wait()
 
-	log.Info("Ethereum protocol stopped")
+	log.Info("Evanesco protocol stopped")
 }
 
 func (h *handler) BroadcastLottery(packet eth.LotteryPacket) {

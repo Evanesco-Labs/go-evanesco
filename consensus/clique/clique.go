@@ -807,29 +807,3 @@ func encodeSigHeaderWithReward(w io.Writer, header *types.Header) {
 		panic("can't encode: " + err.Error())
 	}
 }
-
-func encodeSigHeaderWithoutReward(w io.Writer, header *types.Header) {
-	enc := []interface{}{
-		header.ParentHash,
-		header.UncleHash,
-		header.Coinbase,
-		header.Root,
-		header.TxHash,
-		header.ReceiptHash,
-		header.Bloom,
-		header.Difficulty,
-		header.Number,
-		header.GasLimit,
-		header.GasUsed,
-		header.Time,
-		header.Extra[:len(header.Extra)-crypto.SignatureLength], // Yes, this will panic if extra is too short
-		header.MixDigest,
-		header.Nonce,
-	}
-	if header.BaseFee != nil {
-		enc = append(enc, header.BaseFee)
-	}
-	if err := rlp.Encode(w, enc); err != nil {
-		panic("can't encode: " + err.Error())
-	}
-}
