@@ -19,8 +19,9 @@ package eth
 import (
 	"context"
 	"errors"
-	"github.com/ethereum/go-ethereum/zkpminer"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/zkpminer"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -32,6 +33,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/eth/downloader"
+	"github.com/ethereum/go-ethereum/eth/ethconfig"
 	"github.com/ethereum/go-ethereum/eth/gasprice"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/event"
@@ -281,7 +283,14 @@ func (b *EthAPIBackend) Downloader() *downloader.Downloader {
 }
 
 func (b *EthAPIBackend) SuggestGasTipCap(ctx context.Context) (*big.Int, error) {
-	return b.gpo.SuggestTipCap(ctx)
+	gp, err := b.gpo.SuggestTipCap(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if gp.Cmp(ethconfig.Defaults.Miner.GasPrice) <= 0 {
+		gp = ethconfig.Defaults.Miner.GasPrice
+	}
+	return gp, nil
 }
 
 func (b *EthAPIBackend) FeeHistory(ctx context.Context, blockCount int, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (firstBlock rpc.BlockNumber, reward [][]*big.Int, baseFee []*big.Int, gasUsedRatio []float64, err error) {
