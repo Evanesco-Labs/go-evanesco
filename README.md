@@ -78,7 +78,7 @@ on how you can run your own `eva` instance.
 ### Hardware Requirements
 
 The hardware must meet certain requirements to run a full node.
-- VPS running recent versions of Mac OS X or Linux.
+- PC or VPS running recent versions of Mac OS X or Linux.
 - 100G of SSD storage for Avis testnet and another 10G if you start miner on full node.
 - 2 gigabytes of memory (RAM) for Avis testnet and another 4 gigabytes of memory (RAM) if you start miner on full node.
 - A broadband Internet connection with upload/download speeds of at least 10 megabyte per second
