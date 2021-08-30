@@ -11,8 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/zkpminer/keypair"
 	"github.com/ethereum/go-ethereum/zkpminer/problem"
+	"os"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -37,6 +39,9 @@ const (
 	SUBMITADVANCE    = types.SubmitAdvance
 	RPCTIMEOUT       = time.Minute
 )
+
+var WSUrlTryRound = 3
+var RetryWSRPCWaitDuration = time.Second * 5
 
 type Backend interface {
 	BlockChain() *core.BlockChain
@@ -90,7 +95,7 @@ type Config struct {
 	CoinbaseInterval uint64
 	SubmitAdvance    uint64
 	CoinbaseAddr     common.Address
-	WsUrl            string
+	WsUrl            []string
 	RpcTimeout       time.Duration
 	PkPath           string
 }
@@ -103,19 +108,19 @@ func DefaultConfig() Config {
 		CoinbaseInterval: COINBASEINTERVAL,
 		SubmitAdvance:    SUBMITADVANCE,
 		CoinbaseAddr:     common.Address{},
-		WsUrl:            "",
+		WsUrl:            []string{},
 		RpcTimeout:       RPCTIMEOUT,
-		PkPath:           "./provekey.txt",
+		PkPath:           "./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx",
 	}
 }
 
-func (config *Config) Customize(minerList []keypair.Key, coinbase common.Address, url string, pkPath string) {
+func (config *Config) Customize(minerList []keypair.Key, coinbase common.Address, url []string, pkPath string) {
 	config.MinerList = minerList
 
 	config.CoinbaseAddr = coinbase
 
-	if url != "" {
-		config.WsUrl = url
+	if len(url) != 0 {
+		config.WsUrl = append(config.WsUrl, url...)
 	}
 
 	if pkPath != "" {
@@ -134,7 +139,7 @@ type Miner struct {
 	scanner          *Scanner
 	coinbaseInterval Height
 	submitAdvance    Height
-	wsUrl            string
+	urlList          []string
 	exitCh           chan struct{}
 }
 
@@ -146,6 +151,7 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 		return nil, err
 	}
 	log.Info("Init ZKP Problem worker success!")
+
 	miner := Miner{
 		mu:               sync.RWMutex{},
 		config:           config,
@@ -157,7 +163,7 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 		coinbaseInterval: Height(config.CoinbaseInterval),
 		submitAdvance:    Height(config.SubmitAdvance),
 		exitCh:           make(chan struct{}),
-		wsUrl:            config.WsUrl,
+		urlList:          config.WsUrl,
 	}
 
 	if backend == nil {
@@ -176,12 +182,13 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 			case blockEvent := <-blockEventCh:
 				explorer.headerCh <- blockEvent.Block.Header()
 			case <-sub.Err():
-				//log.Error(ErrorBlockHeaderSubscribe, err)
+				log.Error(ErrorBlockHeaderSubscribe.Error())
 				miner.Close()
 			}
 		}
 	}()
 	miner.NewScanner(&explorer)
+	miner.StartScanner()
 
 	go miner.Loop()
 	//add new workers
@@ -200,6 +207,9 @@ func NewMiner(config Config) (*Miner, error) {
 		return nil, err
 	}
 	log.Info("Init ZKP Problem worker success!")
+	if len(config.WsUrl) == 0 {
+		panic("Evanesco websocket url unset")
+	}
 	miner := Miner{
 		mu:               sync.RWMutex{},
 		config:           config,
@@ -211,34 +221,28 @@ func NewMiner(config Config) (*Miner, error) {
 		coinbaseInterval: Height(config.CoinbaseInterval),
 		submitAdvance:    Height(config.SubmitAdvance),
 		exitCh:           make(chan struct{}),
-		wsUrl:            config.WsUrl,
+		urlList:          config.WsUrl,
 	}
-
-	client, err := rpc.Dial(config.WsUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	headerCh := make(chan *types.Header)
-	sub, err := client.EthSubscribe(context.Background(), headerCh, "newHeads")
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		err := <-sub.Err()
-		log.Error(ErrorBlockHeaderSubscribe.Error(), "err",err)
-		miner.Close()
-	}()
 
 	explorer := RpcExplorer{
-		Client:     client,
-		Sub:        sub,
-		headerCh:   headerCh,
+		Client:     new(rpc.Client),
+		Sub:        new(rpc.ClientSubscription),
+		HeaderCh:   make(chan *types.Header),
 		rpcTimeOut: config.RpcTimeout,
-		wsUrl:      config.WsUrl,
+		WsUrl:      "",
 	}
+
 	miner.NewScanner(&explorer)
+	miner.updateWS()
+
+	go func() {
+		for {
+			err := <-explorer.Sub.Err()
+			log.Warn(ErrorBlockHeaderSubscribe.Error(), "err", err)
+			log.Info("try to connect another node")
+			miner.updateWS()
+		}
+	}()
 
 	go miner.Loop()
 	//add new workers
@@ -247,6 +251,63 @@ func NewMiner(config Config) (*Miner, error) {
 	}
 	log.Info("miner start")
 	return &miner, nil
+}
+
+func (m *Miner) updateWS() {
+
+	if m.scanner.IsUpdating() {
+		return
+	}
+
+	m.scanner.close()
+	exp, ok := m.scanner.explorer.(*RpcExplorer)
+	if !ok {
+		panic("Full node miner cannot update ws client")
+		return
+	}
+
+	//set scanner status updating
+	atomic.StoreInt32(&m.scanner.running, int32(2))
+
+	res := false
+	var err error
+	for i := 0; i < WSUrlTryRound; i++ {
+		for _, url := range m.urlList {
+			time.Sleep(RetryWSRPCWaitDuration)
+			if url == exp.WsUrl {
+				continue
+			}
+			exp.Client, err = rpc.Dial(url)
+			if err != nil {
+				log.Warn("Websocket dial Evanesco node err", "err", err)
+				continue
+			}
+			exp.Sub, err = exp.Client.EthSubscribe(context.Background(), exp.HeaderCh, "newHeads")
+			if err != nil {
+				log.Warn("Subscribe block err", "err", err)
+				continue
+			}
+
+			res = true
+			exp.WsUrl = url
+			log.Info("Connected node WebSocket URL", "url", url)
+			break
+		}
+		if res == true {
+			break
+		} else {
+			//reset url to try this url again
+			exp.WsUrl = ""
+		}
+	}
+
+	if res == false {
+		log.Error("Dial all websocket urls failed")
+		os.Exit(1)
+	}
+
+	m.StartScanner()
+	return
 }
 
 func (m *Miner) Close() {
@@ -260,8 +321,8 @@ func (m *Miner) Close() {
 	}
 	//close scanner
 	m.scanner.close()
-
 	close(m.exitCh)
+	os.Exit(1)
 }
 
 func (m *Miner) NewWorker(minerKey keypair.Key) {
@@ -341,8 +402,8 @@ func (m *Miner) Loop() {
 }
 
 func (m *Miner) NewScanner(explorer Explorer) {
-
 	m.scanner = &Scanner{
+		miner:              m,
 		mu:                 sync.RWMutex{},
 		CoinbaseAddr:       m.CoinbaseAddr,
 		BestScore:          zero,
@@ -354,7 +415,13 @@ func (m *Miner) NewScanner(explorer Explorer) {
 		outboundTaskCh:     make(chan *Task),
 		explorer:           explorer,
 		exitCh:             make(chan struct{}),
+		running:            int32(0),
 	}
+}
 
+func (m *Miner) StartScanner() {
+	m.scanner.close()
+	m.scanner.exitCh = make(chan struct{})
 	go m.scanner.Loop()
+	atomic.StoreInt32(&m.scanner.running, int32(1))
 }

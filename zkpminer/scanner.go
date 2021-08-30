@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -32,13 +33,13 @@ type Explorer interface {
 type RpcExplorer struct {
 	Client     *rpc.Client
 	Sub        ethereum.Subscription
-	headerCh   chan *types.Header
+	HeaderCh   chan *types.Header
 	rpcTimeOut time.Duration
-	wsUrl      string
+	WsUrl      string
 }
 
 func (r *RpcExplorer) GetHeaderChan() chan *types.Header {
-	return r.headerCh
+	return r.HeaderCh
 }
 
 func (r *RpcExplorer) GetHeaderByNum(num uint64) *types.Header {
@@ -47,7 +48,7 @@ func (r *RpcExplorer) GetHeaderByNum(num uint64) *types.Header {
 	var head *types.Header
 	err := r.Client.CallContext(ctx, &head, "eth_getBlockByNumber", toBlockNumArg(new(big.Int).SetUint64(num)), false)
 	if err != nil {
-		log.Error("rpc call eth_getBlockByNumber error","err",err)
+		log.Error("rpc call eth_getBlockByNumber error", "err", err)
 		return nil
 	}
 	return head
@@ -68,6 +69,7 @@ func (l *LocalExplorer) GetHeaderByNum(num uint64) *types.Header {
 
 type Scanner struct {
 	mu                 sync.RWMutex
+	miner              *Miner
 	CoinbaseAddr       common.Address
 	BestScore          *big.Int
 	LastBlockHeight    Height
@@ -77,6 +79,7 @@ type Scanner struct {
 	taskWait           map[Height][]*Task //single concurrent
 	inboundTaskCh      chan *Task         //channel to receive tasks from worker
 	outboundTaskCh     chan *Task         //channel to send challenged task to miner
+	running            int32
 	exitCh             chan struct{}
 }
 
@@ -98,6 +101,7 @@ func (s *Scanner) close() {
 		}
 	}()
 	close(s.exitCh)
+	atomic.StoreInt32(&s.running, int32(0))
 }
 
 func (s *Scanner) Loop() {
@@ -107,20 +111,19 @@ func (s *Scanner) Loop() {
 		case <-s.exitCh:
 			return
 		case header := <-headerCh:
-			log.Debug("best score:","score", s.BestScore)
+			log.Debug("best score:", "score", s.BestScore)
 			height := Height(header.Number.Uint64())
 			//index := height - s.LastCoinbaseHeight
 			index := Height(new(big.Int).Mod(header.Number, new(big.Int).SetUint64(uint64(s.CoinbaseInterval))).Uint64())
-			log.Info("chain status","height", height, "index", index)
+			log.Info("chain status", "height", height, "index", index)
 
 			s.LastBlockHeight = height
 			if s.IfCoinBase(header) {
 				log.Info("start new mining epoch")
 				task := s.NewTask(header)
-				s.taskWait = make(map[Height][]*Task)
 				s.outboundTaskCh <- &task
 				s.LastCoinbaseHeight = height
-				s.BestScore = zero
+				s.CleanStatus()
 			}
 
 			if taskList, ok := s.taskWait[index]; ok {
@@ -150,20 +153,18 @@ func (s *Scanner) Loop() {
 			}
 			if task.Step == TASKPROBLEMSOLVED {
 				taskScore := task.lottery.Score()
-				log.Debug("get solved score:", "score",taskScore)
+				log.Debug("get solved score:", "score", taskScore)
 				if taskScore.Cmp(s.BestScore) != 1 {
-					log.Debug("less than best", "score",s.BestScore)
+					log.Debug("less than best", "score", s.BestScore)
 					continue
 				}
 				s.BestScore = taskScore
 				//todo:abort lottery if exceed deadline
-				err := s.Submit(task)
-				if err != nil {
-					// put this tasks to a list and wait for connection success
-					log.Error(err.Error())
-				}
-				task.Step = TASKSUBMITTED
-				s.outboundTaskCh <- task
+				go func() {
+					s.Submit(task)
+					task.Step = TASKSUBMITTED
+					s.outboundTaskCh <- task
+				}()
 			}
 		}
 	}
@@ -182,7 +183,7 @@ func (s *Scanner) GetHeader(height Height) (*types.Header, error) {
 	return header, nil
 }
 
-func (s *Scanner) Submit(task *Task) error {
+func (s *Scanner) Submit(task *Task) {
 	// Submit check if the lottery has the best score
 	log.Info("submit work",
 		"\nminer address", task.minerAddr,
@@ -197,9 +198,10 @@ func (s *Scanner) Submit(task *Task) error {
 		},
 		})
 		if err != nil {
-			log.Error("submit with local explorer", "err",err)
+			log.Error("submit with local explorer", "err", err)
+			s.miner.Close()
 		}
-		return nil
+		return
 	}
 	if rpcExp, ok := s.explorer.(*RpcExplorer); ok {
 		ctx, cancel := context.WithTimeout(context.Background(), RPCTIMEOUT)
@@ -211,12 +213,32 @@ func (s *Scanner) Submit(task *Task) error {
 
 		err := rpcExp.Client.CallContext(ctx, nil, "eth_lotterySubmit", submit)
 		if err != nil {
-			log.Error("rpc submit lottery error:", "err",err)
+			log.Warn("rpc submit lottery error:", "err", err)
+			log.Info("try to connect another node")
+			s.miner.updateWS()
+			//todo: retry submit after updateWs success
 		}
-		return err
 	}
+}
 
-	return nil
+func (s *Scanner) CleanStatus() {
+	s.taskWait = make(map[Height][]*Task)
+	s.BestScore = zero
+}
+
+func (s *Scanner) IsRunning() bool {
+	if s.running == int32(1) {
+		return true
+	}
+	return false
+}
+
+func (s *Scanner) IsUpdating() bool {
+	if s.running == int32(2) {
+		return true
+	} else {
+		return false
+	}
 }
 
 func toBlockNumArg(number *big.Int) string {

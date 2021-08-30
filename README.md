@@ -144,20 +144,20 @@ curl --location --request POST 'localhost:8545/' \
 ```
 
 ####5. Start Full Node with Miner
-Before starting to mine, you also need to download a ZKP prove key file `provekey.txt`. This is a unique ZKP prove key, and miner have to load this ZKP prove key to start GPow working.
+Before starting to mine, you also need to download a ZKP prove key file `QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx`. This is a unique ZKP prove key, and miner have to load this ZKP prove key to start GPow working.
 
-Please download from IPFS, IPFS CID:
+[IPFS Download Link](https://ipfs.io/ipfs/QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx)
 
 Copy this file to the `avisnode` directory, and start full node and miner with this command:
 ```shell
-./eva --datadir ./data --syncmode 'full' --port 30303 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8545 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7777 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./provekey.txt --zkpvkpath ./verifykey.txt --config ./avis.toml
+./eva --datadir ./data --syncmode 'full' --port 30303 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8545 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7777 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx --zkpvkpath ./verifykey.txt --config ./avis.toml
 ```
 
 This command will start miner with the account you just created and send reward to this address if your mining work has the best score.
 
 Set flag `--zkpkeypath` the path of your keyfile, if you want to derive miner address from this keyfile.
 
-Set flag `----zkpcoinbase` the coinbase address, if you want to receive mining rewards to this address.  
+Set flag `--zkpcoinbase` the coinbase address, if you want to receive mining rewards to this address.  
 
 ### Configuration
 
