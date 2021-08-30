@@ -29,9 +29,9 @@ func DefaultTestConfig() Config {
 		CoinbaseInterval: uint64(5),
 		SubmitAdvance:    SUBMITADVANCE,
 		CoinbaseAddr:     common.Address{},
-		WsUrl:            "",
+		WsUrl:            []string{},
 		RpcTimeout:       RPCTIMEOUT,
-		PkPath:           "./provekey.txt",
+		PkPath:           "./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx",
 	}
 }
 
@@ -53,13 +53,13 @@ func TestMiner(t *testing.T) {
 	}
 
 	config := DefaultTestConfig()
-	config.Customize(minerList, coinbaseKey.Address, testURL, testPKPath)
+	config.Customize(minerList, coinbaseKey.Address, []string{testURL}, testPKPath)
 
 	miner, err := NewMiner(config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	log.Debug("coinbase address:", "coinbase address",miner.scanner.CoinbaseAddr)
+	log.Debug("coinbase address:", "coinbase address", miner.scanner.CoinbaseAddr)
 
 	//add another worker
 	time.Sleep(time.Second * 20)

@@ -1495,12 +1495,12 @@ func setZKPMiner(ctx *cli.Context, cfg *zkpminer.Config) {
 		coinbaseAddr = minerList[0].Address
 	}
 
-	pkPath := "./provekey.txt"
+	pkPath := "./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx"
 	if ctx.GlobalIsSet(ZKPMinerPkPath.Name) {
 		pkPath = ctx.GlobalString(ZKPMinerPkPath.Name)
 	}
 
-	cfg.Customize(minerList, coinbaseAddr, "", pkPath)
+	cfg.Customize(minerList, coinbaseAddr, []string{}, pkPath)
 }
 
 func GetKeyFromFile(ctx *cli.Context, keypath string) (zkpkeypair.Key, error) {
