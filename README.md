@@ -115,7 +115,7 @@ Init genesis block with this command:
 ./eva --datadir data init ./avis.json
 ```
 
-####4. Start Full Node 
+#### 4. Start Full Node 
 Start up full node with this command:
 ```shell
 ./eva --datadir ./data --syncmode 'full' --port 30303 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8545 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7777 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./avis.toml
@@ -143,7 +143,8 @@ curl --location --request POST 'localhost:8545/' \
 }'
 ```
 
-####5. Start Full Node with Miner
+#### 5. Start Full Node with Miner
+
 Before starting to mine, you also need to download a ZKP prove key file `QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx`. This is a unique ZKP prove key, and miner have to load this ZKP prove key to start GPow working.
 
 [IPFS Download Link](https://ipfs.io/ipfs/QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx)
@@ -158,6 +159,40 @@ This command will start miner with the account you just created and send reward 
 Set flag `--zkpkeypath` the path of your keyfile, if you want to derive miner address from this keyfile.
 
 Set flag `--zkpcoinbase` the coinbase address, if you want to receive mining rewards to this address.  
+
+### Update and Restart
+During the testing phase, we may update our code and restart the Avis network.
+Follow the steps below to restart the full node.
+
+#### 1. Rebuild
+Download the latest code from [go-evanesco](https://github.com/Evanesco-Labs/go-evanesco) in branch main. Build the latest code and get the new executable file `eva`.
+
+#### 2. Clear and Replace
+Go to the directory of your previous full node. If you follow the guide above to run full node before, this directory should be named `avisnode`.
+
+Remove the old executable file `eva` and copy the new `eva` into it.
+
+Remove the config file `avis.toml` and copy the new `avis.toml` from the new source code directory into `avisnode`.
+
+Remove the directory `avisnode/data/eva`. 
+**Notice that do not remove the `avisnode/data/keystore` directory!**
+
+#### 3. Re-init Genesis Block
+Init genesis block with this command:
+```shell
+./eva --datadir data init ./avis.json
+```
+
+#### 4. Restart full node
+Restart full node with this command:
+```shell
+./eva --datadir ./data --syncmode 'full' --port 30303 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8545 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7777 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./avis.toml
+```
+
+Restart full node with Miner with this command:
+```shell
+./eva --datadir ./data --syncmode 'full' --port 30303 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8545 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7777 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx --zkpvkpath ./verifykey.txt --config ./avis.toml
+```
 
 ### Configuration
 
