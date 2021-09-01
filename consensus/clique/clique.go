@@ -65,6 +65,8 @@ var (
 
 	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
 
+	GpowBlockReward = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(500)))
+
 	diffInTurn = big.NewInt(2) // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 )
@@ -620,7 +622,7 @@ func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Heade
 	if header.IsZKPRewardBlock() {
 		if header.BestLottery.CoinbaseAddr != empty {
 			c.ResetBestLotteryandScore()
-			state.AddBalance(header.BestLottery.CoinbaseAddr, new(big.Int).SetUint64(types.RewardAmount))
+			state.AddBalance(header.BestLottery.CoinbaseAddr, GpowBlockReward)
 		}
 	}
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
