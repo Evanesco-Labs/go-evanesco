@@ -19,6 +19,7 @@ package eth
 import (
 	"errors"
 	"fmt"
+	clique2 "github.com/ethereum/go-ethereum/consensus/clique"
 	"math/big"
 	"sync/atomic"
 	"time"
@@ -107,9 +108,20 @@ func (h *ethHandler) Handle(peer *eth.Peer, packet eth.Packet) error {
 }
 
 func (h *ethHandler) handleLottery(peer *eth.Peer, lotPacket eth.LotteryPacket) error {
+	clique, ok := h.Chain().Engine().(*clique2.Clique)
+	if !ok {
+		log.Warn("get lottery packet but no clique consensus")
+		return nil
+	}
+
+	if !clique.IfLotteryBetterThanBest(lotPacket.Lottery) {
+		return nil
+	}
+
 	if !h.Chain().VerifyLottery(lotPacket.Lottery, lotPacket.Signature[:]) {
 		return errors.New("lottery verify failed")
 	}
+
 	(*handler)(h).BroadcastLottery(lotPacket)
 	//handle in clique
 	h.Chain().HandleValidLottery(lotPacket.Lottery)
