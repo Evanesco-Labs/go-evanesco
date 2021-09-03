@@ -19,6 +19,8 @@ import (
 
 var zero = new(big.Int).SetInt64(int64(0))
 
+var NewHeaderTimeoutDuration = time.Minute
+
 var (
 	InvalidTaskStepErr = errors.New("not ")
 )
@@ -106,16 +108,23 @@ func (s *Scanner) close() {
 
 func (s *Scanner) Loop() {
 	headerCh := s.explorer.GetHeaderChan()
+	timer := time.NewTimer(NewHeaderTimeoutDuration)
 	for {
 		select {
 		case <-s.exitCh:
+			timer.Stop()
 			return
+		case <-timer.C:
+			log.Warn("receive new header timeout")
+			timer.Stop()
+			s.miner.updateWS()
 		case header := <-headerCh:
+			timer.Reset(NewHeaderTimeoutDuration)
 			log.Debug("best score:", "score", s.BestScore)
 			height := Height(header.Number.Uint64())
 			//index := height - s.LastCoinbaseHeight
 			index := Height(new(big.Int).Mod(header.Number, new(big.Int).SetUint64(uint64(s.CoinbaseInterval))).Uint64())
-			log.Info("chain status", "height", height, "index", index)
+			log.Debug("chain status", "height", height, "index", index)
 
 			s.LastBlockHeight = height
 			if s.IfCoinBase(header) {
@@ -164,6 +173,7 @@ func (s *Scanner) Loop() {
 					s.Submit(task)
 					task.Step = TASKSUBMITTED
 					s.outboundTaskCh <- task
+					log.Info("waiting for next mining epoch", "time duration (second)", (uint64(s.LastCoinbaseHeight)+types.CoinBaseInterval-uint64(s.LastBlockHeight))*6)
 				}()
 			}
 		}
@@ -185,7 +195,7 @@ func (s *Scanner) GetHeader(height Height) (*types.Header, error) {
 
 func (s *Scanner) Submit(task *Task) {
 	// Submit check if the lottery has the best score
-	log.Info("submit work",
+	log.Info("submiting work",
 		"\nminer address", task.minerAddr,
 		"\ncoinbase address", task.CoinbaseAddr,
 		"\nscore", task.lottery.Score().String(),
