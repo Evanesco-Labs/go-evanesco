@@ -104,7 +104,7 @@ func (w *Worker) HandleStartTask(task *Task) error {
 	task.Step = TASKWAITCHALLENGEBLOCK
 
 	log.Info("vrf finished", "challenge height:", w.scanner.LastCoinbaseHeight+task.challengeIndex, "index:", task.challengeIndex)
-
+	log.Info("waiting for challenge block", "time duration (second)", task.challengeIndex*6)
 	// request if this block already exit
 	header, err := w.scanner.GetHeader(w.scanner.LastCoinbaseHeight + task.challengeIndex)
 	if header != nil && err == nil {
@@ -136,7 +136,7 @@ func (w *Worker) HandleTaskAfterChallenge(header *types.Header, task *Task) erro
 }
 
 func (w *Worker) HandlerTaskBeforeChallenge(task *Task) error {
-	log.Debug("handle task before challenge","index", task.challengeIndex)
+	log.Debug("handle task before challenge", "index", task.challengeIndex)
 	task.Step = TASKWAITCHALLENGEBLOCK
 	w.scanner.inboundTaskCh <- task
 	return nil

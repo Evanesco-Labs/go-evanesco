@@ -196,6 +196,7 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 		miner.NewWorker(key)
 	}
 	log.Info("miner start")
+	log.Info("waiting for next mining epoch")
 	return &miner, nil
 }
 
@@ -250,6 +251,7 @@ func NewMiner(config Config) (*Miner, error) {
 		miner.NewWorker(key)
 	}
 	log.Info("miner start")
+	log.Info("waiting for next mining epoch")
 	return &miner, nil
 }
 
