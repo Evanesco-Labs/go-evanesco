@@ -90,7 +90,8 @@ var Defaults = Config{
 		Recommit: 3 * time.Second,
 	},
 	ZKPminer:    zkpminer.DefaultConfig(),
-	ZKPVkPath: "./verifykey.txt",
+	ZKPVkPath:   "./verifykey.txt",
+	LocalHttpUrl: "http://127.0.0.1:8546",
 	TxPool:      core.DefaultTxPoolConfig,
 	RPCGasCap:   50000000,
 	GPO:         FullNodeGPO,
@@ -178,6 +179,9 @@ type Config struct {
 	ZKPminer zkpminer.Config
 
 	ZKPVkPath string
+
+	//Local Http Url
+	LocalHttpUrl string
 
 	// Ethash options
 	Ethash ethash.Config

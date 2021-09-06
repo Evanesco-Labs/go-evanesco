@@ -19,6 +19,7 @@ package eth
 import (
 	"errors"
 	clique2 "github.com/ethereum/go-ethereum/consensus/clique"
+	"github.com/ethereum/go-ethereum/zkpminer"
 	"math"
 	"math/big"
 	"sync"
@@ -554,14 +555,17 @@ func (h *handler) lotteryBroadcastLoop() {
 	for obj := range h.solvedLotterySub.Chan() {
 		if ev, ok := obj.Data.(core.NewSolvedLotteryEvent); ok {
 			//check if better
-			clique,ok := h.chain.Engine().(*clique2.Clique)
-			if !ok{
+			clique, ok := h.chain.Engine().(*clique2.Clique)
+			if !ok {
 				continue
 			}
-			if !clique.IfLotteryBetterThanBest(ev.Lot.Lottery){
+			if !clique.IfLotteryBetterThanBest(ev.Lot.Lottery) {
 				continue
 			}
 
+			if !zkpminer.Iseffective(ev.Lot.MinerAddr, h.chain.Config().LocalHttpUrl) {
+				continue
+			}
 			//handle local solved lottery
 			if !h.chain.VerifyLottery(ev.Lot.Lottery, ev.Lot.Signature[:]) {
 				log.Warn("Local ZKP miner submit invalid lottery")

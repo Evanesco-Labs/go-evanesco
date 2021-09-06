@@ -195,7 +195,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	)
 	//add verify key path
 	if chainConfig != nil {
-		if chainConfig.Clique== nil {
+		if chainConfig.Clique == nil {
 			chainConfig.Clique = &params.CliqueConfig{
 				Period: 6,
 				Epoch:  3000,
@@ -203,6 +203,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			}
 		}
 		chainConfig.Clique.VKPath = config.ZKPVkPath
+		chainConfig.LocalHttpUrl = config.LocalHttpUrl
 	}
 
 	eth.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, chainConfig, eth.engine, vmConfig, eth.shouldPreserve, &config.TxLookupLimit)
