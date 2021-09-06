@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	clique2 "github.com/ethereum/go-ethereum/consensus/clique"
+	"github.com/ethereum/go-ethereum/zkpminer"
 	"math/big"
 	"sync/atomic"
 	"time"
@@ -115,6 +116,10 @@ func (h *ethHandler) handleLottery(peer *eth.Peer, lotPacket eth.LotteryPacket) 
 	}
 
 	if !clique.IfLotteryBetterThanBest(lotPacket.Lottery) {
+		return nil
+	}
+
+	if !zkpminer.Iseffective(lotPacket.MinerAddr, h.chain.Config().LocalHttpUrl) {
 		return nil
 	}
 

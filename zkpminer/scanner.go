@@ -195,10 +195,11 @@ func (s *Scanner) GetHeader(height Height) (*types.Header, error) {
 
 func (s *Scanner) Submit(task *Task) {
 	// Submit check if the lottery has the best score
+	score := (*hexutil.Big)(task.lottery.Score())
 	log.Info("submiting work",
 		"\nminer address", task.minerAddr,
 		"\ncoinbase address", task.CoinbaseAddr,
-		"\nscore", task.lottery.Score().String(),
+		"\nscore", score.String(),
 	)
 
 	if localExp, ok := s.explorer.(*LocalExplorer); ok {

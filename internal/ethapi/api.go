@@ -1166,6 +1166,14 @@ func RPCMarshalHeader(head *types.Header) map[string]interface{} {
 		"Score":            (*hexutil.Big)(head.BestLottery.Score()),
 	}
 
+	if !head.IsZKPRewardBlock() {
+		result["ZKPCoinbase"] = common.Address{}
+		result["ZKPMiner"] = common.Address{}
+		result["ZKPProof"] = []byte{}
+		result["ChallengeIndex"] = [32]byte{}
+		result["Score"] = (*hexutil.Big)(big.NewInt(int64(0)))
+	}
+
 	if head.BaseFee != nil {
 		result["baseFeePerGas"] = (*hexutil.Big)(head.BaseFee)
 	}
