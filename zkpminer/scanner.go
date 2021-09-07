@@ -128,6 +128,10 @@ func (s *Scanner) Loop() {
 
 			s.LastBlockHeight = height
 			if s.IfCoinBase(header) {
+				if _, ok := s.miner.Workers[header.BestLottery.MinerAddr]; ok {
+					log.Info("Congratulations your work has the best score!")
+				}
+
 				log.Info("start new mining epoch")
 				task := s.NewTask(header)
 				s.outboundTaskCh <- &task
