@@ -135,7 +135,7 @@ type Miner struct {
 	MaxWorkerCnt     int32
 	MaxTaskCnt       int32
 	CoinbaseAddr     common.Address
-	workers          map[common.Address]*Worker
+	Workers          map[common.Address]*Worker
 	scanner          *Scanner
 	coinbaseInterval Height
 	submitAdvance    Height
@@ -159,7 +159,7 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 		MaxWorkerCnt:     config.MaxWorkerCnt,
 		MaxTaskCnt:       config.MaxTaskCnt,
 		CoinbaseAddr:     config.CoinbaseAddr,
-		workers:          make(map[common.Address]*Worker),
+		Workers:          make(map[common.Address]*Worker),
 		coinbaseInterval: Height(config.CoinbaseInterval),
 		submitAdvance:    Height(config.SubmitAdvance),
 		exitCh:           make(chan struct{}),
@@ -209,7 +209,7 @@ func NewMiner(config Config) (*Miner, error) {
 	}
 	log.Info("Init ZKP Problem worker success!")
 	if len(config.WsUrl) == 0 {
-		panic("Evanesco websocket url unset")
+		Fatalf("Evanesco websocket url unset")
 	}
 	miner := Miner{
 		mu:               sync.RWMutex{},
@@ -218,7 +218,7 @@ func NewMiner(config Config) (*Miner, error) {
 		MaxWorkerCnt:     config.MaxWorkerCnt,
 		MaxTaskCnt:       config.MaxTaskCnt,
 		CoinbaseAddr:     config.CoinbaseAddr,
-		workers:          make(map[common.Address]*Worker),
+		Workers:          make(map[common.Address]*Worker),
 		coinbaseInterval: Height(config.CoinbaseInterval),
 		submitAdvance:    Height(config.SubmitAdvance),
 		exitCh:           make(chan struct{}),
@@ -264,7 +264,7 @@ func (m *Miner) updateWS() {
 	m.scanner.close()
 	exp, ok := m.scanner.explorer.(*RpcExplorer)
 	if !ok {
-		panic("Full node miner cannot update ws client")
+		Fatalf("Full node miner disconnected from Avis Network more than %v", NewHeaderTimeoutDuration.String())
 		return
 	}
 
@@ -318,7 +318,7 @@ func (m *Miner) Close() {
 		}
 	}()
 	//close workers
-	for _, worker := range m.workers {
+	for _, worker := range m.Workers {
 		worker.close()
 	}
 	//close scanner
@@ -330,7 +330,7 @@ func (m *Miner) Close() {
 func (m *Miner) NewWorker(minerKey keypair.Key) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if len(m.workers) == int(m.MaxWorkerCnt) {
+	if len(m.Workers) == int(m.MaxWorkerCnt) {
 		log.Error(ErrorMinerWorkerOutOfRange.Error())
 		return
 	}
@@ -351,27 +351,27 @@ func (m *Miner) NewWorker(minerKey keypair.Key) {
 		exitCh:           make(chan struct{}),
 	}
 
-	m.workers[minerKey.Address] = &worker
+	m.Workers[minerKey.Address] = &worker
 	go worker.Loop()
 	worker.start()
 	log.Debug("worker start")
 }
 
 func (m *Miner) CloseWorker(addr common.Address) {
-	if worker, ok := m.workers[addr]; ok {
+	if worker, ok := m.Workers[addr]; ok {
 		worker.close()
-		delete(m.workers, addr)
+		delete(m.Workers, addr)
 	}
 }
 
 func (m *Miner) StopWorker(addr common.Address) {
-	if worker, ok := m.workers[addr]; ok {
+	if worker, ok := m.Workers[addr]; ok {
 		worker.stop()
 	}
 }
 
 func (m *Miner) StartWorker(addr common.Address) {
-	if worker, ok := m.workers[addr]; ok {
+	if worker, ok := m.Workers[addr]; ok {
 		worker.start()
 	}
 }
@@ -383,14 +383,14 @@ func (m *Miner) Loop() {
 			return
 		case taskTem := <-m.scanner.outboundTaskCh:
 			if taskTem.Step == TASKSTART {
-				for _, worker := range m.workers {
+				for _, worker := range m.Workers {
 					task := SetTaskMinerAddr(taskTem, worker.minerAddr)
 					worker.inboundTaskCh <- &task
 				}
 				continue
 			}
 			if taskTem.Step == TASKGETCHALLENGEBLOCK {
-				if worker, ok := m.workers[taskTem.minerAddr]; ok {
+				if worker, ok := m.Workers[taskTem.minerAddr]; ok {
 					worker.inboundTaskCh <- taskTem
 					continue
 				}
