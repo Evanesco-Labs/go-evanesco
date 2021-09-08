@@ -1159,20 +1159,21 @@ func RPCMarshalHeader(head *types.Header) map[string]interface{} {
 		"timestamp":        hexutil.Uint64(head.Time),
 		"transactionsRoot": head.TxHash,
 		"receiptsRoot":     head.ReceiptHash,
-		"ZKPCoinbase":      head.BestLottery.CoinbaseAddr,
-		"ZKPMiner":         head.BestLottery.MinerAddr,
-		"ZKPProof":         head.BestLottery.ZkpProof,
-		"ChallengeIndex":   head.BestLottery.Index,
-		"Score":            (*hexutil.Big)(head.BestLottery.Score()),
+		"best_lottery":     head.BestLottery,
+		//"ZKPCoinbase":      head.BestLottery.CoinbaseAddr,
+		//"ZKPMiner":         head.BestLottery.MinerAddr,
+		//"ZKPProof":         head.BestLottery.ZkpProof,
+		//"ChallengeIndex":   head.BestLottery.Index,
+		//"Score":            (*hexutil.Big)(head.BestLottery.Score()),
 	}
 
-	if !head.IsZKPRewardBlock() {
-		result["ZKPCoinbase"] = common.Address{}
-		result["ZKPMiner"] = common.Address{}
-		result["ZKPProof"] = []byte{}
-		result["ChallengeIndex"] = [32]byte{}
-		result["Score"] = (*hexutil.Big)(big.NewInt(int64(0)))
-	}
+	//if !head.IsZKPRewardBlock() {
+	//	result["ZKPCoinbase"] = common.Address{}
+	//	result["ZKPMiner"] = common.Address{}
+	//	result["ZKPProof"] = []byte{}
+	//	result["ChallengeIndex"] = [32]byte{}
+	//	result["Score"] = (*hexutil.Big)(big.NewInt(int64(0)))
+	//}
 
 	if head.BaseFee != nil {
 		result["baseFeePerGas"] = (*hexutil.Big)(head.BaseFee)
