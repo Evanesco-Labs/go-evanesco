@@ -3,9 +3,11 @@ package zkpminer
 import (
 	"context"
 	"errors"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/evaclient"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -130,6 +132,7 @@ func (config *Config) Customize(minerList []keypair.Key, coinbase common.Address
 
 type Miner struct {
 	mu               sync.RWMutex
+	isEffective      sync.Once
 	config           Config
 	zkpProver        *problem.Prover
 	MaxWorkerCnt     int32
@@ -284,6 +287,7 @@ func (m *Miner) updateWS() {
 				log.Warn("Websocket dial Evanesco node err", "err", err)
 				continue
 			}
+
 			exp.Sub, err = exp.Client.EthSubscribe(context.Background(), exp.HeaderCh, "newHeads")
 			if err != nil {
 				log.Warn("Subscribe block err", "err", err)
@@ -296,6 +300,25 @@ func (m *Miner) updateWS() {
 			break
 		}
 		if res == true {
+			//check miner address effective
+			checkEffective := func() {
+				evaClient := evaclient.NewClient(exp.Client)
+				caller, err := NewPledgeCaller(PledgeContract, evaClient)
+				if err != nil {
+					Fatalf("New Pledge caller error %v", err)
+				}
+				for _, minerKey := range m.config.MinerList {
+					ok, err := caller.Iseffective(&bind.CallOpts{Pending: false}, minerKey.Address)
+					if err != nil {
+						Fatalf("call pledge contract iseffective error %v", err)
+					}
+					if !ok {
+						Fatalf("Miner address not staked %v", minerKey.Address.String())
+					}
+				}
+			}
+
+			m.isEffective.Do(checkEffective)
 			break
 		} else {
 			//reset url to try this url again
