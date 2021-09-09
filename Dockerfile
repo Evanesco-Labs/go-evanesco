@@ -1,28 +1,15 @@
-# Support setting various labels on the final image
-ARG COMMIT=""
-ARG VERSION=""
-ARG BUILDNUM=""
+FROM golang:1.17-alpine as builder
 
-# Build Geth in a stock Go builder container
-FROM golang:1.16-alpine as builder
+RUN apk add --no-cache gcc musl-dev linux-headers git
 
-RUN apk add --no-cache make gcc musl-dev linux-headers git
-
-ADD . /go-ethereum
-RUN cd /go-ethereum && make eva
-
-# Pull Geth into a second stage deploy alpine container
 FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates
-COPY --from=builder /go-ethereum/build/bin/eva /usr/local/bin/
 
-EXPOSE 8545 8546 30303 30303/udp
-ENTRYPOINT ["eva"]
+WORKDIR /opt/gopath/src/github.com/evanesco/
 
-# Add some metadata labels to help programatic image consumption
-ARG COMMIT=""
-ARG VERSION=""
-ARG BUILDNUM=""
+ADD ./miner-linux.zip /opt/gopath/src/github.com/evanesco/
+ADD ./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx /opt/gopath/src/github.com/evanesco/
+RUN unzip miner-linux.zip && mv ./miner-linux miner && rm miner-linux.zip && mv ./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx ./miner
 
-LABEL commit="$COMMIT" version="$VERSION" buildnum="$BUILDNUM"
+CMD ["/bin/bash"]
