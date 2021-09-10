@@ -2296,7 +2296,6 @@ func (bc *BlockChain) resetLotteryLoop() {
 	for {
 		select {
 		case ev := <-blockEventCh:
-			fmt.Printf("number: %v, hash: %v", ev.Block.Number().Uint64(), ev.Block.Header().Hash())
 			if ev.Block.Header().IsZKPRewardBlock() {
 				clique.ResetBestLotteryandScore()
 				bc.lastCoinbaseHeader = bc.CurrentHeader()
