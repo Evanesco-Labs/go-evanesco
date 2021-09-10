@@ -21,7 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
-var PledgeContract = common.HexToAddress("0x5C54891860a1b7fec6B6bb1B4402e990503785FD")
+var PledgeContract = common.HexToAddress("0x05aaBC119747bE4508dE6c043907574414BeFf87")
 
 func Iseffective(miner common.Address, url string) bool {
 	client, err := evaclient.Dial(url)
