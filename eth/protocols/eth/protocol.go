@@ -17,10 +17,8 @@
 package eth
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto"
 	"io"
 	"math/big"
 
@@ -124,14 +122,6 @@ func (p *NewBlockHashesPacket) Unpack() ([]common.Hash, []uint64) {
 }
 
 type LotteryPacket types.LotterySubmit
-
-func (lp *LotteryPacket) Hash() common.Hash {
-	b, err := json.Marshal(lp)
-	if err != nil {
-		return common.Hash{}
-	}
-	return crypto.Keccak256Hash(b)
-}
 
 // TransactionsPacket is the network packet for broadcasting new transactions.
 type TransactionsPacket []*types.Transaction

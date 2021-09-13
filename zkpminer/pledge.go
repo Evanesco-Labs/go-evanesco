@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/evaclient"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/rpc"
 	"io"
 	"math/big"
 	"os"
@@ -23,16 +24,12 @@ import (
 
 var PledgeContract = common.HexToAddress("0x05aaBC119747bE4508dE6c043907574414BeFf87")
 
-func Iseffective(miner common.Address, url string) bool {
-	client, err := evaclient.Dial(url)
-	if err != nil {
-		Fatalf("clique dial local http url %v error: %v", url, err)
-		return false
-	}
+func Iseffective(miner common.Address, server *rpc.Server) bool {
+	client := evaclient.NewClient(rpc.DialInProc(server))
 	defer client.Close()
 	caller, err := NewPledgeCaller(PledgeContract, client)
 	if err != nil {
-		Fatalf("New Pledge Contract %v error: %v", PledgeContract, err)
+		Fatalf("New Pledge Contract error" + PledgeContract.String() + err.Error())
 		return false
 	}
 	ok, err := caller.Iseffective(&bind.CallOpts{Pending: false}, miner)

@@ -441,7 +441,7 @@ func (h *handler) Stop() {
 }
 
 func (h *handler) BroadcastLottery(packet eth.LotteryPacket) {
-	log.Info("broadcast lottery async")
+	log.Debug("broadcast lottery async", "hash", packet.Hash())
 	peers := h.peers.peersWithoutLottery(packet.Hash())
 	for _, peer := range peers {
 		peer.AsyncSendNewLottery(&packet)
@@ -549,7 +549,7 @@ func (h *handler) txBroadcastLoop() {
 	}
 }
 
-//handle and broadcast lotteries from local and remote zkp miner
+//handle and broadcast lotteries from local zkp miner
 func (h *handler) lotteryBroadcastLoop() {
 	defer h.wg.Done()
 	for obj := range h.solvedLotterySub.Chan() {
@@ -562,16 +562,15 @@ func (h *handler) lotteryBroadcastLoop() {
 			if !clique.IfLotteryBetterThanBest(ev.Lot.Lottery) {
 				continue
 			}
-
-			if !zkpminer.Iseffective(ev.Lot.MinerAddr, h.chain.Config().LocalHttpUrl) {
+			if !zkpminer.Iseffective(ev.Lot.MinerAddr, h.chain.InprocHandler) {
+				log.Warn("not effective", "addr", ev.Lot.MinerAddr)
 				continue
 			}
 			//handle local solved lottery
 			if !h.chain.VerifyLottery(ev.Lot.Lottery, ev.Lot.Signature[:]) {
-				log.Warn("Local ZKP miner submit invalid lottery")
+				log.Warn("ZKP miner submit invalid lottery", "hash", ev.Lot.Lottery.Hash())
 				continue
 			}
-
 			h.chain.HandleValidLottery(ev.Lot.Lottery)
 			h.BroadcastLottery(eth.LotteryPacket(ev.Lot))
 		}

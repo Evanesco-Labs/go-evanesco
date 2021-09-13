@@ -21,7 +21,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	clique2 "github.com/ethereum/go-ethereum/consensus/clique"
+	"github.com/ethereum/go-ethereum/eth/protocols/eth"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/zkpminer"
 	"io"
 	"math/big"
 	"os"
@@ -39,6 +42,12 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/trie"
+)
+
+var (
+	NotCliqueConsensusError = errors.New("no clique engine, invalid Evanesco node")
+	NotEffectiveAddrError   = errors.New("miner address not staked")
+	ZKPProofVerifyError     = errors.New("ZKP proof verify failed")
 )
 
 // PublicEthereumAPI provides an API to access Ethereum full node-related
@@ -69,8 +78,26 @@ func (api *PublicEthereumAPI) Hashrate() hexutil.Uint64 {
 
 // LotterySubmit handles remote miner's ZKP mining lottery
 func (api *PublicEthereumAPI) LotterySubmit(submit types.LotterySubmit) error {
-	log.Info("receive lottery submit", "hash", submit.Hash())
-	return api.e.eventMux.Post(core.NewSolvedLotteryEvent{Lot: submit})
+	log.Debug("receive lottery submit", "hash", submit.Hash())
+	//check if better
+	clique, ok := api.e.BlockChain().Engine().(*clique2.Clique)
+	if !ok {
+		return NotCliqueConsensusError
+	}
+	if !clique.IfLotteryBetterThanBest(submit.Lottery) {
+		return nil
+	}
+	if !zkpminer.Iseffective(submit.MinerAddr, api.e.BlockChain().InprocHandler) {
+		return NotEffectiveAddrError
+	}
+	//handle local solved lottery
+	if !api.e.BlockChain().VerifyLottery(submit.Lottery, submit.Signature[:]) {
+		log.Warn("ZKP miner submit invalid lottery", "hash", submit.Lottery.Hash())
+		return ZKPProofVerifyError
+	}
+	api.e.BlockChain().HandleValidLottery(submit.Lottery)
+	api.e.handler.BroadcastLottery(eth.LotteryPacket(submit))
+	return nil
 }
 
 // PublicMinerAPI provides an API to control the miner.

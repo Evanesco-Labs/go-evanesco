@@ -218,7 +218,7 @@ func (c *Clique) SetInboundLotteryScore(l types.Lottery) {
 }
 
 func (c *Clique) GetBestLottery() types.Lottery {
-	return c.bestLottery
+	return c.bestLottery.DeepCopy()
 }
 
 func (c *Clique) GetBestScore() *big.Int {

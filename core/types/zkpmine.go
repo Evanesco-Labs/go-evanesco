@@ -99,6 +99,14 @@ func (l *Lottery) Score() *big.Int {
 	return new(big.Int).SetBytes(b[:])
 }
 
+func (l *Lottery) Hash() common.Hash {
+	b, err := json.Marshal(l)
+	if err != nil {
+		return common.Hash{}
+	}
+	return crypto.Keccak256Hash(b)
+}
+
 func IfPassDiff(score []byte, diff *big.Int) bool {
 	target := new(big.Int).Div(max256, diff)
 	if new(big.Int).SetBytes(score).Cmp(target) > 0 {
@@ -117,14 +125,6 @@ func xor(one, other []byte) (xor []byte) {
 		xor[i] = one[i] ^ other[i]
 	}
 	return xor
-}
-
-func (lp *LotterySubmit) Hash() common.Hash {
-	b, err := json.Marshal(lp)
-	if err != nil {
-		return common.Hash{}
-	}
-	return crypto.Keccak256Hash(b)
 }
 
 func (h *Header) IsZKPRewardBlock() bool {
