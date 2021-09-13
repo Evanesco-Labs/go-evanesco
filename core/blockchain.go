@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	clique2 "github.com/ethereum/go-ethereum/consensus/clique"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/zkpminer/problem"
 	"io"
 	"math/big"
@@ -214,12 +215,13 @@ type BlockChain struct {
 
 	verifier           *problem.Verifier
 	lastCoinbaseHeader *types.Header
+	InprocHandler      *rpc.Server
 }
 
 // NewBlockChain returns a fully initialised block chain using information
 // available in the database. It initialises the default Ethereum Validator and
 // Processor.
-func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *params.ChainConfig, engine consensus.Engine, vmConfig vm.Config, shouldPreserve func(block *types.Block) bool, txLookupLimit *uint64) (*BlockChain, error) {
+func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *params.ChainConfig, engine consensus.Engine, vmConfig vm.Config, shouldPreserve func(block *types.Block) bool, txLookupLimit *uint64, inprocServer *rpc.Server) (*BlockChain, error) {
 	if cacheConfig == nil {
 		cacheConfig = defaultCacheConfig
 	}
@@ -250,6 +252,7 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 		futureBlocks:   futureBlocks,
 		engine:         engine,
 		vmConfig:       vmConfig,
+		InprocHandler: inprocServer,
 	}
 	bc.validator = NewBlockValidator(chainConfig, bc, engine)
 	bc.prefetcher = newStatePrefetcher(chainConfig, bc, engine)
@@ -2315,7 +2318,7 @@ func (bc *BlockChain) VerifyLottery(l types.Lottery, sig []byte) bool {
 }
 
 func (bc *BlockChain) HandleValidLottery(l types.Lottery) {
-	log.Info("handle valid lottery")
+	log.Info("handle valid lottery", "hash", l.Hash())
 	clique, ok := bc.Engine().(*clique2.Clique)
 	if !ok {
 		return

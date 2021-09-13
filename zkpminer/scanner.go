@@ -22,7 +22,10 @@ var zero = new(big.Int).SetInt64(int64(0))
 var NewHeaderTimeoutDuration = time.Minute
 
 var (
-	InvalidTaskStepErr = errors.New("not ")
+	InvalidTaskStepErr    = errors.New("invalid task step")
+	NotCliqueConsensusErr = errors.New("no clique engine, invalid Evanesco node")
+	NotEffectiveAddrErr   = errors.New("miner address not staked")
+	ZKPProofVerifyErr     = errors.New("ZKP proof verify failed")
 )
 
 type Height uint64
@@ -228,10 +231,12 @@ func (s *Scanner) Submit(task *Task) {
 
 		err := rpcExp.Client.CallContext(ctx, nil, "eth_lotterySubmit", submit)
 		if err != nil {
-			log.Warn("rpc submit lottery error:", "err", err)
-			log.Info("try to connect another node")
-			s.miner.updateWS()
-			//todo: retry submit after updateWs success
+			log.Error("rpc submit lottery error:", "err", err)
+			if err != NotEffectiveAddrErr || err != ZKPProofVerifyErr {
+				log.Info("try to connect another node")
+				s.miner.updateWS()
+				//todo: retry submit after updateWs success
+			}
 		}
 	}
 }

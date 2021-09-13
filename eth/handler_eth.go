@@ -119,7 +119,7 @@ func (h *ethHandler) handleLottery(peer *eth.Peer, lotPacket eth.LotteryPacket) 
 		return nil
 	}
 
-	if !zkpminer.Iseffective(lotPacket.MinerAddr, h.chain.Config().LocalHttpUrl) {
+	if !zkpminer.Iseffective(lotPacket.MinerAddr, h.chain.InprocHandler) {
 		return nil
 	}
 

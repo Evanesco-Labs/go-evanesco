@@ -664,3 +664,7 @@ func (n *Node) closeDatabases() (errors []error) {
 	}
 	return errors
 }
+
+func (n *Node) GetInprocHandler() *rpc.Server {
+	return n.inprocHandler
+}
