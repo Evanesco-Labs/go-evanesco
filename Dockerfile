@@ -1,28 +1,10 @@
-# Support setting various labels on the final image
-ARG COMMIT=""
-ARG VERSION=""
-ARG BUILDNUM=""
+FROM centos:centos7.9.2009
 
-# Build Geth in a stock Go builder container
-FROM golang:1.16-alpine as builder
+RUN yum update -y && yum install epel-release zip unzip wget curl -y && yum install golang -y
 
-RUN apk add --no-cache make gcc musl-dev linux-headers git
+WORKDIR /opt/gopath/src/github.com/evanesco/
+ADD ./miner-linux.zip /opt/gopath/src/github.com/evanesco/
+ADD ./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx /opt/gopath/src/github.com/evanesco/
+RUN unzip miner-linux.zip && mv ./miner-linux miner && rm miner-linux.zip && mv ./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx ./miner
 
-ADD . /go-ethereum
-RUN cd /go-ethereum && make eva
-
-# Pull Geth into a second stage deploy alpine container
-FROM alpine:latest
-
-RUN apk add --no-cache ca-certificates
-COPY --from=builder /go-ethereum/build/bin/eva /usr/local/bin/
-
-EXPOSE 8545 8546 30303 30303/udp
-ENTRYPOINT ["eva"]
-
-# Add some metadata labels to help programatic image consumption
-ARG COMMIT=""
-ARG VERSION=""
-ARG BUILDNUM=""
-
-LABEL commit="$COMMIT" version="$VERSION" buildnum="$BUILDNUM"
+CMD ["/bin/bash"]
