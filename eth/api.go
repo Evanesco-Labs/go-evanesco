@@ -76,6 +76,10 @@ func (api *PublicEthereumAPI) Hashrate() hexutil.Uint64 {
 	return hexutil.Uint64(api.e.Miner().Hashrate())
 }
 
+func (api *PublicEthereumAPI) CheckIseffective(addr common.Address) bool {
+	return zkpminer.Iseffective(addr, api.e.BlockChain().InprocHandler)
+}
+
 // LotterySubmit handles remote miner's ZKP mining lottery
 func (api *PublicEthereumAPI) LotterySubmit(submit types.LotterySubmit) error {
 	log.Debug("receive lottery submit", "hash", submit.Hash())
