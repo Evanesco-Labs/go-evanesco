@@ -1625,27 +1625,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		cfg.ZKPVkPath = ctx.GlobalString(ZKPVkPath.Name)
 	}
 
-	//set local http rpc
-	httpHost := "127.0.0.1"
-	if ctx.GlobalBool(LegacyRPCEnabledFlag.Name) && ctx.GlobalIsSet(LegacyRPCListenAddrFlag.Name) {
-		httpHost = ctx.GlobalString(LegacyRPCListenAddrFlag.Name)
-	}
-	if ctx.GlobalIsSet(HTTPEnabledFlag.Name) && ctx.GlobalIsSet(HTTPListenAddrFlag.Name) {
-		httpHost = ctx.GlobalString(HTTPListenAddrFlag.Name)
-	}
-
-	httpPort := 8546
-	if ctx.GlobalIsSet(LegacyRPCPortFlag.Name) {
-		httpPort = ctx.GlobalInt(LegacyRPCPortFlag.Name)
-	}
-	if ctx.GlobalIsSet(HTTPPortFlag.Name) {
-		httpPort = ctx.GlobalInt(HTTPPortFlag.Name)
-	}
-
-	httpUrl := "http://" + httpHost + ":" + strconv.Itoa(httpPort)
-	log.Info("Local http rpc raw url", "url", httpUrl)
-	cfg.LocalHttpUrl = httpUrl
-
 	// Cap the cache allowance and tune the garbage collector
 	mem, err := gopsutil.VirtualMemory()
 	if err == nil {
