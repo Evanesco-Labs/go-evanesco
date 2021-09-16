@@ -562,14 +562,22 @@ func (h *handler) lotteryBroadcastLoop() {
 			if !clique.IfLotteryBetterThanBest(ev.Lot.Lottery) {
 				continue
 			}
-			if !zkpminer.Iseffective(ev.Lot.MinerAddr, h.chain.InprocHandler) {
-				log.Warn("not effective", "addr", ev.Lot.MinerAddr)
+			nonPledgeCoinbase := common.Address{}
+			ok, coinbasePledge := zkpminer.Iseffective(ev.Lot.MinerAddr, h.chain.InprocHandler)
+			if !ok {
+				log.Error("miner address not effective", "addr", ev.Lot.MinerAddr)
 				continue
 			}
+
+			if coinbasePledge != nonPledgeCoinbase && coinbasePledge != ev.Lot.CoinbaseAddr {
+				log.Error("coinbase address conflict, check the coinbase address setting in Fortress")
+				continue
+			}
+
 			//handle local solved lottery
 			if !h.chain.VerifyLottery(ev.Lot.Lottery, ev.Lot.Signature[:]) {
-				log.Warn("ZKP miner submit invalid lottery", "hash", ev.Lot.Lottery.Hash())
-				continue
+				log.Error("ZKP miner submit invalid lottery", "hash", ev.Lot.Lottery.Hash())
+				return
 			}
 			h.chain.HandleValidLottery(ev.Lot.Lottery)
 			h.BroadcastLottery(eth.LotteryPacket(ev.Lot))

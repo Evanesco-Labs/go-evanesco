@@ -48,6 +48,7 @@ var (
 	NotCliqueConsensusError = errors.New("no clique engine, invalid Evanesco node")
 	NotEffectiveAddrError   = errors.New("miner address not staked")
 	ZKPProofVerifyError     = errors.New("ZKP proof verify failed")
+	NotPledgeCoinbaseError  = errors.New("coinbase address conflict, check the coinbase address setting in Fortress")
 )
 
 // PublicEthereumAPI provides an API to access Ethereum full node-related
@@ -76,8 +77,10 @@ func (api *PublicEthereumAPI) Hashrate() hexutil.Uint64 {
 	return hexutil.Uint64(api.e.Miner().Hashrate())
 }
 
-func (api *PublicEthereumAPI) CheckIseffective(addr common.Address) bool {
-	return zkpminer.Iseffective(addr, api.e.BlockChain().InprocHandler)
+func (api *PublicEthereumAPI) CheckIseffectiveNew(addr common.Address) bool {
+	ok, addr := zkpminer.Iseffective(addr, api.e.BlockChain().InprocHandler)
+	log.Info("Check is effective new", "coinbase address", addr)
+	return ok
 }
 
 // LotterySubmit handles remote miner's ZKP mining lottery
@@ -91,8 +94,13 @@ func (api *PublicEthereumAPI) LotterySubmit(submit types.LotterySubmit) error {
 	if !clique.IfLotteryBetterThanBest(submit.Lottery) {
 		return nil
 	}
-	if !zkpminer.Iseffective(submit.MinerAddr, api.e.BlockChain().InprocHandler) {
+	ok, coinbasePledge := zkpminer.Iseffective(submit.MinerAddr, api.e.BlockChain().InprocHandler)
+	if !ok {
 		return NotEffectiveAddrError
+	}
+	emptyAddr := common.Address{}
+	if coinbasePledge != emptyAddr && coinbasePledge != submit.CoinbaseAddr {
+		return NotPledgeCoinbaseError
 	}
 	//handle local solved lottery
 	if !api.e.BlockChain().VerifyLottery(submit.Lottery, submit.Signature[:]) {

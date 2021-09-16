@@ -148,6 +148,9 @@ type Miner struct {
 
 func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 	runtime.GOMAXPROCS(1)
+	if backend == nil {
+		return nil, ErrorLocalMinerWithoutBackend
+	}
 	zkpProver, err := problem.NewProblemProver(config.PkPath)
 	if err != nil {
 		log.Error(err.Error())
@@ -167,11 +170,37 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 		submitAdvance:    Height(config.SubmitAdvance),
 		exitCh:           make(chan struct{}),
 		urlList:          config.WsUrl,
+		isEffective:      sync.Once{},
 	}
 
-	if backend == nil {
-		return nil, ErrorLocalMinerWithoutBackend
+	checkEffective := func() {
+		//check effective
+		minerAddress := config.MinerList[0].Address
+		ok, coinbasePledge := Iseffective(minerAddress, backend.BlockChain().InprocHandler)
+		if !ok {
+			Fatalf("Miner address not staked %v", minerAddress.String())
+		}
+		emptyAddr := common.Address{}
+		//coinbase address is not set on pledge, use miner address by default
+		if coinbasePledge == emptyAddr {
+			if miner.CoinbaseAddr == emptyAddr {
+				miner.CoinbaseAddr = minerAddress
+			}
+			return
+		}
+		//coinbase address is set, use pledge coinbase address by default
+		if coinbasePledge != emptyAddr {
+			if miner.CoinbaseAddr != coinbasePledge {
+				Fatalf(NotPledgeCoinbaseError.Error())
+			}
+			if miner.CoinbaseAddr == emptyAddr {
+				miner.CoinbaseAddr = coinbasePledge
+			}
+			return
+		}
 	}
+
+	miner.isEffective.Do(checkEffective)
 
 	explorer := LocalExplorer{
 		Backend:  backend,
@@ -226,6 +255,7 @@ func NewMiner(config Config) (*Miner, error) {
 		submitAdvance:    Height(config.SubmitAdvance),
 		exitCh:           make(chan struct{}),
 		urlList:          config.WsUrl,
+		isEffective:      sync.Once{},
 	}
 
 	explorer := RpcExplorer{
@@ -308,12 +338,30 @@ func (m *Miner) updateWS() {
 					Fatalf("New Pledge caller error %v", err)
 				}
 				for _, minerKey := range m.config.MinerList {
-					ok, err := caller.Iseffective(&bind.CallOpts{Pending: false}, minerKey.Address)
+					ok, coinbasePledge, err := caller.IseffectiveNew(&bind.CallOpts{Pending: false}, minerKey.Address)
 					if err != nil {
-						Fatalf("call pledge contract iseffective error %v", err)
+						Fatalf("call pledge contract abi IseffectiveNew error %v", err)
 					}
 					if !ok {
 						Fatalf("Miner address not staked %v", minerKey.Address.String())
+					}
+					emptyAddr := common.Address{}
+					//coinbase address is not set on pledge, use miner address by default
+					if coinbasePledge == emptyAddr {
+						if m.CoinbaseAddr == emptyAddr {
+							m.CoinbaseAddr = m.config.MinerList[0].Address
+						}
+						return
+					}
+					//coinbase address is set, use pledge coinbase address by default
+					if coinbasePledge != emptyAddr {
+						if m.CoinbaseAddr != coinbasePledge {
+							Fatalf(NotPledgeCoinbaseError.Error())
+						}
+						if m.CoinbaseAddr == emptyAddr {
+							m.CoinbaseAddr = coinbasePledge
+						}
+						return
 					}
 				}
 			}
