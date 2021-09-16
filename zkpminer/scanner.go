@@ -22,10 +22,11 @@ var zero = new(big.Int).SetInt64(int64(0))
 var NewHeaderTimeoutDuration = time.Minute
 
 var (
-	InvalidTaskStepErr    = errors.New("invalid task step")
-	NotCliqueConsensusErr = errors.New("no clique engine, invalid Evanesco node")
-	NotEffectiveAddrErr   = errors.New("miner address not staked")
-	ZKPProofVerifyErr     = errors.New("ZKP proof verify failed")
+	InvalidTaskStepErr      = errors.New("invalid task step")
+	NotCliqueConsensusError = errors.New("no clique engine, invalid Evanesco node")
+	NotEffectiveAddrError   = errors.New("miner address not staked")
+	ZKPProofVerifyError     = errors.New("ZKP proof verify failed")
+	NotPledgeCoinbaseError  = errors.New("coinbase address conflict, check the coinbase address setting in Fortress")
 )
 
 type Height uint64
@@ -221,6 +222,7 @@ func (s *Scanner) Submit(task *Task) {
 		}
 		return
 	}
+
 	if rpcExp, ok := s.explorer.(*RpcExplorer); ok {
 		ctx, cancel := context.WithTimeout(context.Background(), RPCTIMEOUT)
 		defer cancel()
@@ -231,8 +233,17 @@ func (s *Scanner) Submit(task *Task) {
 
 		err := rpcExp.Client.CallContext(ctx, nil, "eth_lotterySubmit", submit)
 		if err != nil {
-			log.Error("rpc submit lottery error:", "err", err)
-			if err != NotEffectiveAddrErr || err != ZKPProofVerifyErr {
+			log.Error("rpc submit work error:", "err", err)
+			if err == NotEffectiveAddrError {
+				Fatalf("Miner address not effective")
+			}
+			if err == ZKPProofVerifyError {
+				Fatalf("ZKP proof verify failed, please check miner setting and config")
+			}
+			if err == NotPledgeCoinbaseError {
+				Fatalf(NotPledgeCoinbaseError.Error())
+			}
+			if err != NotEffectiveAddrError && err != ZKPProofVerifyError && err != NotPledgeCoinbaseError {
 				log.Info("try to connect another node")
 				s.miner.updateWS()
 				//todo: retry submit after updateWs success

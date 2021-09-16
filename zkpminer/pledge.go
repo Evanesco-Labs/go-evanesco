@@ -4,14 +4,7 @@
 package zkpminer
 
 import (
-	"fmt"
-	"github.com/ethereum/go-ethereum/evaclient"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/rpc"
-	"io"
 	"math/big"
-	"os"
-	"runtime"
 	"strings"
 
 	ethereum "github.com/ethereum/go-ethereum"
@@ -21,24 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
 )
-
-var PledgeContract = common.HexToAddress("0x05aaBC119747bE4508dE6c043907574414BeFf87")
-
-func Iseffective(miner common.Address, server *rpc.Server) bool {
-	client := evaclient.NewClient(rpc.DialInProc(server))
-	defer client.Close()
-	caller, err := NewPledgeCaller(PledgeContract, client)
-	if err != nil {
-		Fatalf("New Pledge Contract error" + PledgeContract.String() + err.Error())
-		return false
-	}
-	ok, err := caller.Iseffective(&bind.CallOpts{Pending: false}, miner)
-	if err != nil {
-		log.Error("Iseffective error", "err", err)
-		return false
-	}
-	return ok
-}
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
@@ -71,7 +46,7 @@ type PledgeWithdrawInfo struct {
 }
 
 // PledgeABI is the input ABI used to generate the binding from.
-const PledgeABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Withdraw\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allMininAddr\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"userDeposits\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint32\",\"name\":\"depositAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"expireAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"nodes\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"settled\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"userDepositsMininAddr\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"userWithdraws\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"uIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"wAmount\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"stateMutability\":\"payable\",\"type\":\"receive\",\"payable\":true},{\"inputs\":[],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_nodes\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"_addrs\",\"type\":\"address[]\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\",\"payable\":true},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_curTime\",\"type\":\"uint256\"}],\"name\":\"allowWithdraw\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"iseffective\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"contractIQLF\",\"name\":\"_qlf\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"_isWhiteList\",\"type\":\"bool\"}],\"name\":\"setAddressQLF\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_time\",\"type\":\"uint256\"}],\"name\":\"setMinPledgeAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_lockTime\",\"type\":\"uint256\"}],\"name\":\"setLockTime\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_isDepositPaused\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"_isWithdrawPaused\",\"type\":\"bool\"}],\"name\":\"setPaused\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"isValidateWhite\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getUserDeposits\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint32\",\"name\":\"depositAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"expireAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"nodes\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"settled\",\"type\":\"bool\"}],\"internalType\":\"structPledge.UserInfo[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getUserWithdraws\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"uIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"wAmount\",\"type\":\"uint256\"}],\"internalType\":\"structPledge.WithdrawInfo[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getUserDepositsMininAddr\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true}]"
+const PledgeABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Withdraw\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"borrowsRecard\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint32\",\"name\":\"depositAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"expireAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"nodes\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"settled\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"minPledgeAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalBorrows\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"userDepositsLending\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"stateMutability\":\"payable\",\"type\":\"receive\",\"payable\":true},{\"inputs\":[],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_nodes\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"_addrs\",\"type\":\"address[]\"},{\"internalType\":\"uint256\",\"name\":\"_expiredAt\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\",\"payable\":true},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_curTime\",\"type\":\"uint256\"}],\"name\":\"allowWithdraw\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"iseffective\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"contractIQLF\",\"name\":\"_qlf\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"_isWhiteList\",\"type\":\"bool\"}],\"name\":\"setAddressQLF\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_time\",\"type\":\"uint256\"}],\"name\":\"setMinPledgeAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_lockTime\",\"type\":\"uint256\"}],\"name\":\"setLockTime\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_isDepositPaused\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"_isWithdrawPaused\",\"type\":\"bool\"}],\"name\":\"setPaused\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"isValidateWhite\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getUserDeposits\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint32\",\"name\":\"depositAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"expireAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"nodes\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"settled\",\"type\":\"bool\"}],\"internalType\":\"structPledge.UserInfo[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getUserWithdraws\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"uIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"wAmount\",\"type\":\"uint256\"}],\"internalType\":\"structPledge.WithdrawInfo[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getUserDepositsMininAddr\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"getAddressQLF\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"getisWhiteList\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectStartTime\",\"type\":\"uint256\"}],\"name\":\"setProjectStartTime\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getBlockTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"_flag\",\"type\":\"bool\"}],\"name\":\"addMininAddr\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"isExtisAddress\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"}],\"name\":\"isExtisBathAddress\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"getUserDepositsMininAddrLength\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_oldAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_replace\",\"type\":\"address\"}],\"name\":\"updateDepositsMininAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_replace\",\"type\":\"address\"}],\"name\":\"updateDepositsCoinbaseAddr\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_sender\",\"type\":\"address\"}],\"name\":\"getDepositsCoinbaseAddr\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"getBorrowsRecard\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint32\",\"name\":\"depositAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"expireAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"nodes\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"settled\",\"type\":\"bool\"}],\"internalType\":\"structPledge.UserInfo[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"getUserDepositsLending\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_sender\",\"type\":\"address\"}],\"name\":\"getUserLendingDeposits\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint32\",\"name\":\"depositAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"expireAt\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"nodes\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"settled\",\"type\":\"bool\"}],\"internalType\":\"structPledge.UserInfo[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_nodes\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_expiredAt\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"_addrs\",\"type\":\"address[]\"}],\"name\":\"depositLending\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\",\"payable\":true},{\"inputs\":[],\"name\":\"getLendingAccount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"_totalBorrow\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_notExpireBorrow\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_expireBorrow\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_expireAt\",\"type\":\"uint256\"}],\"name\":\"setdataMigration\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"iseffectiveNew\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true}]"
 
 // Pledge is an auto generated Go binding around an Ethereum contract.
 type Pledge struct {
@@ -215,37 +190,6 @@ func (_Pledge *PledgeTransactorRaw) Transact(opts *bind.TransactOpts, method str
 	return _Pledge.Contract.contract.Transact(opts, method, params...)
 }
 
-// AllMininAddr is a free data retrieval call binding the contract method 0xa8b024f4.
-//
-// Solidity: function allMininAddr(address ) view returns(bool)
-func (_Pledge *PledgeCaller) AllMininAddr(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
-	var out []interface{}
-	err := _Pledge.contract.Call(opts, &out, "allMininAddr", arg0)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
-}
-
-// AllMininAddr is a free data retrieval call binding the contract method 0xa8b024f4.
-//
-// Solidity: function allMininAddr(address ) view returns(bool)
-func (_Pledge *PledgeSession) AllMininAddr(arg0 common.Address) (bool, error) {
-	return _Pledge.Contract.AllMininAddr(&_Pledge.CallOpts, arg0)
-}
-
-// AllMininAddr is a free data retrieval call binding the contract method 0xa8b024f4.
-//
-// Solidity: function allMininAddr(address ) view returns(bool)
-func (_Pledge *PledgeCallerSession) AllMininAddr(arg0 common.Address) (bool, error) {
-	return _Pledge.Contract.AllMininAddr(&_Pledge.CallOpts, arg0)
-}
-
 // AllowWithdraw is a free data retrieval call binding the contract method 0xa3bd4585.
 //
 // Solidity: function allowWithdraw(uint256 _index, uint256 _curTime) view returns(bool)
@@ -275,6 +219,250 @@ func (_Pledge *PledgeSession) AllowWithdraw(_index *big.Int, _curTime *big.Int) 
 // Solidity: function allowWithdraw(uint256 _index, uint256 _curTime) view returns(bool)
 func (_Pledge *PledgeCallerSession) AllowWithdraw(_index *big.Int, _curTime *big.Int) (bool, error) {
 	return _Pledge.Contract.AllowWithdraw(&_Pledge.CallOpts, _index, _curTime)
+}
+
+// BorrowsRecard is a free data retrieval call binding the contract method 0xe9d1fd0d.
+//
+// Solidity: function borrowsRecard(uint256 ) view returns(uint256 index, address user, uint32 depositAt, uint32 expireAt, uint32 nodes, uint256 amount, bool settled)
+func (_Pledge *PledgeCaller) BorrowsRecard(opts *bind.CallOpts, arg0 *big.Int) (struct {
+	Index     *big.Int
+	User      common.Address
+	DepositAt uint32
+	ExpireAt  uint32
+	Nodes     uint32
+	Amount    *big.Int
+	Settled   bool
+}, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "borrowsRecard", arg0)
+
+	outstruct := new(struct {
+		Index     *big.Int
+		User      common.Address
+		DepositAt uint32
+		ExpireAt  uint32
+		Nodes     uint32
+		Amount    *big.Int
+		Settled   bool
+	})
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Index = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.User = *abi.ConvertType(out[1], new(common.Address)).(*common.Address)
+	outstruct.DepositAt = *abi.ConvertType(out[2], new(uint32)).(*uint32)
+	outstruct.ExpireAt = *abi.ConvertType(out[3], new(uint32)).(*uint32)
+	outstruct.Nodes = *abi.ConvertType(out[4], new(uint32)).(*uint32)
+	outstruct.Amount = *abi.ConvertType(out[5], new(*big.Int)).(**big.Int)
+	outstruct.Settled = *abi.ConvertType(out[6], new(bool)).(*bool)
+
+	return *outstruct, err
+
+}
+
+// BorrowsRecard is a free data retrieval call binding the contract method 0xe9d1fd0d.
+//
+// Solidity: function borrowsRecard(uint256 ) view returns(uint256 index, address user, uint32 depositAt, uint32 expireAt, uint32 nodes, uint256 amount, bool settled)
+func (_Pledge *PledgeSession) BorrowsRecard(arg0 *big.Int) (struct {
+	Index     *big.Int
+	User      common.Address
+	DepositAt uint32
+	ExpireAt  uint32
+	Nodes     uint32
+	Amount    *big.Int
+	Settled   bool
+}, error) {
+	return _Pledge.Contract.BorrowsRecard(&_Pledge.CallOpts, arg0)
+}
+
+// BorrowsRecard is a free data retrieval call binding the contract method 0xe9d1fd0d.
+//
+// Solidity: function borrowsRecard(uint256 ) view returns(uint256 index, address user, uint32 depositAt, uint32 expireAt, uint32 nodes, uint256 amount, bool settled)
+func (_Pledge *PledgeCallerSession) BorrowsRecard(arg0 *big.Int) (struct {
+	Index     *big.Int
+	User      common.Address
+	DepositAt uint32
+	ExpireAt  uint32
+	Nodes     uint32
+	Amount    *big.Int
+	Settled   bool
+}, error) {
+	return _Pledge.Contract.BorrowsRecard(&_Pledge.CallOpts, arg0)
+}
+
+// GetAddressQLF is a free data retrieval call binding the contract method 0xa2de3904.
+//
+// Solidity: function getAddressQLF() view returns(address)
+func (_Pledge *PledgeCaller) GetAddressQLF(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "getAddressQLF")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetAddressQLF is a free data retrieval call binding the contract method 0xa2de3904.
+//
+// Solidity: function getAddressQLF() view returns(address)
+func (_Pledge *PledgeSession) GetAddressQLF() (common.Address, error) {
+	return _Pledge.Contract.GetAddressQLF(&_Pledge.CallOpts)
+}
+
+// GetAddressQLF is a free data retrieval call binding the contract method 0xa2de3904.
+//
+// Solidity: function getAddressQLF() view returns(address)
+func (_Pledge *PledgeCallerSession) GetAddressQLF() (common.Address, error) {
+	return _Pledge.Contract.GetAddressQLF(&_Pledge.CallOpts)
+}
+
+// GetBlockTime is a free data retrieval call binding the contract method 0x87ceff09.
+//
+// Solidity: function getBlockTime() view returns(uint256 time)
+func (_Pledge *PledgeCaller) GetBlockTime(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "getBlockTime")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetBlockTime is a free data retrieval call binding the contract method 0x87ceff09.
+//
+// Solidity: function getBlockTime() view returns(uint256 time)
+func (_Pledge *PledgeSession) GetBlockTime() (*big.Int, error) {
+	return _Pledge.Contract.GetBlockTime(&_Pledge.CallOpts)
+}
+
+// GetBlockTime is a free data retrieval call binding the contract method 0x87ceff09.
+//
+// Solidity: function getBlockTime() view returns(uint256 time)
+func (_Pledge *PledgeCallerSession) GetBlockTime() (*big.Int, error) {
+	return _Pledge.Contract.GetBlockTime(&_Pledge.CallOpts)
+}
+
+// GetBorrowsRecard is a free data retrieval call binding the contract method 0xecf57d4e.
+//
+// Solidity: function getBorrowsRecard() view returns((uint256,address,uint32,uint32,uint32,uint256,bool)[])
+func (_Pledge *PledgeCaller) GetBorrowsRecard(opts *bind.CallOpts) ([]PledgeUserInfo, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "getBorrowsRecard")
+
+	if err != nil {
+		return *new([]PledgeUserInfo), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]PledgeUserInfo)).(*[]PledgeUserInfo)
+
+	return out0, err
+
+}
+
+// GetBorrowsRecard is a free data retrieval call binding the contract method 0xecf57d4e.
+//
+// Solidity: function getBorrowsRecard() view returns((uint256,address,uint32,uint32,uint32,uint256,bool)[])
+func (_Pledge *PledgeSession) GetBorrowsRecard() ([]PledgeUserInfo, error) {
+	return _Pledge.Contract.GetBorrowsRecard(&_Pledge.CallOpts)
+}
+
+// GetBorrowsRecard is a free data retrieval call binding the contract method 0xecf57d4e.
+//
+// Solidity: function getBorrowsRecard() view returns((uint256,address,uint32,uint32,uint32,uint256,bool)[])
+func (_Pledge *PledgeCallerSession) GetBorrowsRecard() ([]PledgeUserInfo, error) {
+	return _Pledge.Contract.GetBorrowsRecard(&_Pledge.CallOpts)
+}
+
+// GetDepositsCoinbaseAddr is a free data retrieval call binding the contract method 0xaaaca3cc.
+//
+// Solidity: function getDepositsCoinbaseAddr(address _sender) view returns(address)
+func (_Pledge *PledgeCaller) GetDepositsCoinbaseAddr(opts *bind.CallOpts, _sender common.Address) (common.Address, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "getDepositsCoinbaseAddr", _sender)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetDepositsCoinbaseAddr is a free data retrieval call binding the contract method 0xaaaca3cc.
+//
+// Solidity: function getDepositsCoinbaseAddr(address _sender) view returns(address)
+func (_Pledge *PledgeSession) GetDepositsCoinbaseAddr(_sender common.Address) (common.Address, error) {
+	return _Pledge.Contract.GetDepositsCoinbaseAddr(&_Pledge.CallOpts, _sender)
+}
+
+// GetDepositsCoinbaseAddr is a free data retrieval call binding the contract method 0xaaaca3cc.
+//
+// Solidity: function getDepositsCoinbaseAddr(address _sender) view returns(address)
+func (_Pledge *PledgeCallerSession) GetDepositsCoinbaseAddr(_sender common.Address) (common.Address, error) {
+	return _Pledge.Contract.GetDepositsCoinbaseAddr(&_Pledge.CallOpts, _sender)
+}
+
+// GetLendingAccount is a free data retrieval call binding the contract method 0xc86f1b71.
+//
+// Solidity: function getLendingAccount() view returns(uint256 _totalBorrow, uint256 _notExpireBorrow, uint256 _expireBorrow)
+func (_Pledge *PledgeCaller) GetLendingAccount(opts *bind.CallOpts) (struct {
+	TotalBorrow     *big.Int
+	NotExpireBorrow *big.Int
+	ExpireBorrow    *big.Int
+}, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "getLendingAccount")
+
+	outstruct := new(struct {
+		TotalBorrow     *big.Int
+		NotExpireBorrow *big.Int
+		ExpireBorrow    *big.Int
+	})
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.TotalBorrow = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.NotExpireBorrow = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.ExpireBorrow = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+
+	return *outstruct, err
+
+}
+
+// GetLendingAccount is a free data retrieval call binding the contract method 0xc86f1b71.
+//
+// Solidity: function getLendingAccount() view returns(uint256 _totalBorrow, uint256 _notExpireBorrow, uint256 _expireBorrow)
+func (_Pledge *PledgeSession) GetLendingAccount() (struct {
+	TotalBorrow     *big.Int
+	NotExpireBorrow *big.Int
+	ExpireBorrow    *big.Int
+}, error) {
+	return _Pledge.Contract.GetLendingAccount(&_Pledge.CallOpts)
+}
+
+// GetLendingAccount is a free data retrieval call binding the contract method 0xc86f1b71.
+//
+// Solidity: function getLendingAccount() view returns(uint256 _totalBorrow, uint256 _notExpireBorrow, uint256 _expireBorrow)
+func (_Pledge *PledgeCallerSession) GetLendingAccount() (struct {
+	TotalBorrow     *big.Int
+	NotExpireBorrow *big.Int
+	ExpireBorrow    *big.Int
+}, error) {
+	return _Pledge.Contract.GetLendingAccount(&_Pledge.CallOpts)
 }
 
 // GetUserDeposits is a free data retrieval call binding the contract method 0x2a5bf6d2.
@@ -308,6 +496,37 @@ func (_Pledge *PledgeCallerSession) GetUserDeposits(user common.Address) ([]Pled
 	return _Pledge.Contract.GetUserDeposits(&_Pledge.CallOpts, user)
 }
 
+// GetUserDepositsLending is a free data retrieval call binding the contract method 0xbebdca09.
+//
+// Solidity: function getUserDepositsLending() view returns(uint256[])
+func (_Pledge *PledgeCaller) GetUserDepositsLending(opts *bind.CallOpts) ([]*big.Int, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "getUserDepositsLending")
+
+	if err != nil {
+		return *new([]*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]*big.Int)).(*[]*big.Int)
+
+	return out0, err
+
+}
+
+// GetUserDepositsLending is a free data retrieval call binding the contract method 0xbebdca09.
+//
+// Solidity: function getUserDepositsLending() view returns(uint256[])
+func (_Pledge *PledgeSession) GetUserDepositsLending() ([]*big.Int, error) {
+	return _Pledge.Contract.GetUserDepositsLending(&_Pledge.CallOpts)
+}
+
+// GetUserDepositsLending is a free data retrieval call binding the contract method 0xbebdca09.
+//
+// Solidity: function getUserDepositsLending() view returns(uint256[])
+func (_Pledge *PledgeCallerSession) GetUserDepositsLending() ([]*big.Int, error) {
+	return _Pledge.Contract.GetUserDepositsLending(&_Pledge.CallOpts)
+}
+
 // GetUserDepositsMininAddr is a free data retrieval call binding the contract method 0xee4f542c.
 //
 // Solidity: function getUserDepositsMininAddr(address user) view returns(address[])
@@ -339,6 +558,68 @@ func (_Pledge *PledgeCallerSession) GetUserDepositsMininAddr(user common.Address
 	return _Pledge.Contract.GetUserDepositsMininAddr(&_Pledge.CallOpts, user)
 }
 
+// GetUserDepositsMininAddrLength is a free data retrieval call binding the contract method 0x9cf205bd.
+//
+// Solidity: function getUserDepositsMininAddrLength() view returns(uint256)
+func (_Pledge *PledgeCaller) GetUserDepositsMininAddrLength(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "getUserDepositsMininAddrLength")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetUserDepositsMininAddrLength is a free data retrieval call binding the contract method 0x9cf205bd.
+//
+// Solidity: function getUserDepositsMininAddrLength() view returns(uint256)
+func (_Pledge *PledgeSession) GetUserDepositsMininAddrLength() (*big.Int, error) {
+	return _Pledge.Contract.GetUserDepositsMininAddrLength(&_Pledge.CallOpts)
+}
+
+// GetUserDepositsMininAddrLength is a free data retrieval call binding the contract method 0x9cf205bd.
+//
+// Solidity: function getUserDepositsMininAddrLength() view returns(uint256)
+func (_Pledge *PledgeCallerSession) GetUserDepositsMininAddrLength() (*big.Int, error) {
+	return _Pledge.Contract.GetUserDepositsMininAddrLength(&_Pledge.CallOpts)
+}
+
+// GetUserLendingDeposits is a free data retrieval call binding the contract method 0x013f9435.
+//
+// Solidity: function getUserLendingDeposits(address _sender) view returns((uint256,address,uint32,uint32,uint32,uint256,bool)[])
+func (_Pledge *PledgeCaller) GetUserLendingDeposits(opts *bind.CallOpts, _sender common.Address) ([]PledgeUserInfo, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "getUserLendingDeposits", _sender)
+
+	if err != nil {
+		return *new([]PledgeUserInfo), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]PledgeUserInfo)).(*[]PledgeUserInfo)
+
+	return out0, err
+
+}
+
+// GetUserLendingDeposits is a free data retrieval call binding the contract method 0x013f9435.
+//
+// Solidity: function getUserLendingDeposits(address _sender) view returns((uint256,address,uint32,uint32,uint32,uint256,bool)[])
+func (_Pledge *PledgeSession) GetUserLendingDeposits(_sender common.Address) ([]PledgeUserInfo, error) {
+	return _Pledge.Contract.GetUserLendingDeposits(&_Pledge.CallOpts, _sender)
+}
+
+// GetUserLendingDeposits is a free data retrieval call binding the contract method 0x013f9435.
+//
+// Solidity: function getUserLendingDeposits(address _sender) view returns((uint256,address,uint32,uint32,uint32,uint256,bool)[])
+func (_Pledge *PledgeCallerSession) GetUserLendingDeposits(_sender common.Address) ([]PledgeUserInfo, error) {
+	return _Pledge.Contract.GetUserLendingDeposits(&_Pledge.CallOpts, _sender)
+}
+
 // GetUserWithdraws is a free data retrieval call binding the contract method 0x515d223a.
 //
 // Solidity: function getUserWithdraws(address user) view returns((uint256,uint256,uint256,uint256)[])
@@ -368,6 +649,99 @@ func (_Pledge *PledgeSession) GetUserWithdraws(user common.Address) ([]PledgeWit
 // Solidity: function getUserWithdraws(address user) view returns((uint256,uint256,uint256,uint256)[])
 func (_Pledge *PledgeCallerSession) GetUserWithdraws(user common.Address) ([]PledgeWithdrawInfo, error) {
 	return _Pledge.Contract.GetUserWithdraws(&_Pledge.CallOpts, user)
+}
+
+// GetisWhiteList is a free data retrieval call binding the contract method 0x2154d560.
+//
+// Solidity: function getisWhiteList() view returns(bool)
+func (_Pledge *PledgeCaller) GetisWhiteList(opts *bind.CallOpts) (bool, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "getisWhiteList")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// GetisWhiteList is a free data retrieval call binding the contract method 0x2154d560.
+//
+// Solidity: function getisWhiteList() view returns(bool)
+func (_Pledge *PledgeSession) GetisWhiteList() (bool, error) {
+	return _Pledge.Contract.GetisWhiteList(&_Pledge.CallOpts)
+}
+
+// GetisWhiteList is a free data retrieval call binding the contract method 0x2154d560.
+//
+// Solidity: function getisWhiteList() view returns(bool)
+func (_Pledge *PledgeCallerSession) GetisWhiteList() (bool, error) {
+	return _Pledge.Contract.GetisWhiteList(&_Pledge.CallOpts)
+}
+
+// IsExtisAddress is a free data retrieval call binding the contract method 0x2480f68c.
+//
+// Solidity: function isExtisAddress(address user) view returns(bool)
+func (_Pledge *PledgeCaller) IsExtisAddress(opts *bind.CallOpts, user common.Address) (bool, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "isExtisAddress", user)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// IsExtisAddress is a free data retrieval call binding the contract method 0x2480f68c.
+//
+// Solidity: function isExtisAddress(address user) view returns(bool)
+func (_Pledge *PledgeSession) IsExtisAddress(user common.Address) (bool, error) {
+	return _Pledge.Contract.IsExtisAddress(&_Pledge.CallOpts, user)
+}
+
+// IsExtisAddress is a free data retrieval call binding the contract method 0x2480f68c.
+//
+// Solidity: function isExtisAddress(address user) view returns(bool)
+func (_Pledge *PledgeCallerSession) IsExtisAddress(user common.Address) (bool, error) {
+	return _Pledge.Contract.IsExtisAddress(&_Pledge.CallOpts, user)
+}
+
+// IsExtisBathAddress is a free data retrieval call binding the contract method 0xc3d30934.
+//
+// Solidity: function isExtisBathAddress(address[] users) view returns(bool)
+func (_Pledge *PledgeCaller) IsExtisBathAddress(opts *bind.CallOpts, users []common.Address) (bool, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "isExtisBathAddress", users)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// IsExtisBathAddress is a free data retrieval call binding the contract method 0xc3d30934.
+//
+// Solidity: function isExtisBathAddress(address[] users) view returns(bool)
+func (_Pledge *PledgeSession) IsExtisBathAddress(users []common.Address) (bool, error) {
+	return _Pledge.Contract.IsExtisBathAddress(&_Pledge.CallOpts, users)
+}
+
+// IsExtisBathAddress is a free data retrieval call binding the contract method 0xc3d30934.
+//
+// Solidity: function isExtisBathAddress(address[] users) view returns(bool)
+func (_Pledge *PledgeCallerSession) IsExtisBathAddress(users []common.Address) (bool, error) {
+	return _Pledge.Contract.IsExtisBathAddress(&_Pledge.CallOpts, users)
 }
 
 // IsValidateWhite is a free data retrieval call binding the contract method 0xac574946.
@@ -432,6 +806,69 @@ func (_Pledge *PledgeCallerSession) Iseffective(user common.Address) (bool, erro
 	return _Pledge.Contract.Iseffective(&_Pledge.CallOpts, user)
 }
 
+// IseffectiveNew is a free data retrieval call binding the contract method 0xb39a8baa.
+//
+// Solidity: function iseffectiveNew(address user) view returns(bool, address)
+func (_Pledge *PledgeCaller) IseffectiveNew(opts *bind.CallOpts, user common.Address) (bool, common.Address, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "iseffectiveNew", user)
+
+	if err != nil {
+		return *new(bool), *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+	out1 := *abi.ConvertType(out[1], new(common.Address)).(*common.Address)
+
+	return out0, out1, err
+
+}
+
+// IseffectiveNew is a free data retrieval call binding the contract method 0xb39a8baa.
+//
+// Solidity: function iseffectiveNew(address user) view returns(bool, address)
+func (_Pledge *PledgeSession) IseffectiveNew(user common.Address) (bool, common.Address, error) {
+	return _Pledge.Contract.IseffectiveNew(&_Pledge.CallOpts, user)
+}
+
+// IseffectiveNew is a free data retrieval call binding the contract method 0xb39a8baa.
+//
+// Solidity: function iseffectiveNew(address user) view returns(bool, address)
+func (_Pledge *PledgeCallerSession) IseffectiveNew(user common.Address) (bool, common.Address, error) {
+	return _Pledge.Contract.IseffectiveNew(&_Pledge.CallOpts, user)
+}
+
+// MinPledgeAmount is a free data retrieval call binding the contract method 0xec555e91.
+//
+// Solidity: function minPledgeAmount() view returns(uint256)
+func (_Pledge *PledgeCaller) MinPledgeAmount(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Pledge.contract.Call(opts, &out, "minPledgeAmount")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// MinPledgeAmount is a free data retrieval call binding the contract method 0xec555e91.
+//
+// Solidity: function minPledgeAmount() view returns(uint256)
+func (_Pledge *PledgeSession) MinPledgeAmount() (*big.Int, error) {
+	return _Pledge.Contract.MinPledgeAmount(&_Pledge.CallOpts)
+}
+
+// MinPledgeAmount is a free data retrieval call binding the contract method 0xec555e91.
+//
+// Solidity: function minPledgeAmount() view returns(uint256)
+func (_Pledge *PledgeCallerSession) MinPledgeAmount() (*big.Int, error) {
+	return _Pledge.Contract.MinPledgeAmount(&_Pledge.CallOpts)
+}
+
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
 // Solidity: function owner() view returns(address)
@@ -463,181 +900,129 @@ func (_Pledge *PledgeCallerSession) Owner() (common.Address, error) {
 	return _Pledge.Contract.Owner(&_Pledge.CallOpts)
 }
 
-// UserDeposits is a free data retrieval call binding the contract method 0x08f43333.
+// TotalBorrows is a free data retrieval call binding the contract method 0x47bd3718.
 //
-// Solidity: function userDeposits(address , uint256 ) view returns(uint256 index, address user, uint32 depositAt, uint32 expireAt, uint32 nodes, uint256 amount, bool settled)
-func (_Pledge *PledgeCaller) UserDeposits(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (struct {
-	Index     *big.Int
-	User      common.Address
-	DepositAt uint32
-	ExpireAt  uint32
-	Nodes     uint32
-	Amount    *big.Int
-	Settled   bool
-}, error) {
+// Solidity: function totalBorrows() view returns(uint256)
+func (_Pledge *PledgeCaller) TotalBorrows(opts *bind.CallOpts) (*big.Int, error) {
 	var out []interface{}
-	err := _Pledge.contract.Call(opts, &out, "userDeposits", arg0, arg1)
-
-	outstruct := new(struct {
-		Index     *big.Int
-		User      common.Address
-		DepositAt uint32
-		ExpireAt  uint32
-		Nodes     uint32
-		Amount    *big.Int
-		Settled   bool
-	})
-	if err != nil {
-		return *outstruct, err
-	}
-
-	outstruct.Index = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-	outstruct.User = *abi.ConvertType(out[1], new(common.Address)).(*common.Address)
-	outstruct.DepositAt = *abi.ConvertType(out[2], new(uint32)).(*uint32)
-	outstruct.ExpireAt = *abi.ConvertType(out[3], new(uint32)).(*uint32)
-	outstruct.Nodes = *abi.ConvertType(out[4], new(uint32)).(*uint32)
-	outstruct.Amount = *abi.ConvertType(out[5], new(*big.Int)).(**big.Int)
-	outstruct.Settled = *abi.ConvertType(out[6], new(bool)).(*bool)
-
-	return *outstruct, err
-
-}
-
-// UserDeposits is a free data retrieval call binding the contract method 0x08f43333.
-//
-// Solidity: function userDeposits(address , uint256 ) view returns(uint256 index, address user, uint32 depositAt, uint32 expireAt, uint32 nodes, uint256 amount, bool settled)
-func (_Pledge *PledgeSession) UserDeposits(arg0 common.Address, arg1 *big.Int) (struct {
-	Index     *big.Int
-	User      common.Address
-	DepositAt uint32
-	ExpireAt  uint32
-	Nodes     uint32
-	Amount    *big.Int
-	Settled   bool
-}, error) {
-	return _Pledge.Contract.UserDeposits(&_Pledge.CallOpts, arg0, arg1)
-}
-
-// UserDeposits is a free data retrieval call binding the contract method 0x08f43333.
-//
-// Solidity: function userDeposits(address , uint256 ) view returns(uint256 index, address user, uint32 depositAt, uint32 expireAt, uint32 nodes, uint256 amount, bool settled)
-func (_Pledge *PledgeCallerSession) UserDeposits(arg0 common.Address, arg1 *big.Int) (struct {
-	Index     *big.Int
-	User      common.Address
-	DepositAt uint32
-	ExpireAt  uint32
-	Nodes     uint32
-	Amount    *big.Int
-	Settled   bool
-}, error) {
-	return _Pledge.Contract.UserDeposits(&_Pledge.CallOpts, arg0, arg1)
-}
-
-// UserDepositsMininAddr is a free data retrieval call binding the contract method 0xaceb24a6.
-//
-// Solidity: function userDepositsMininAddr(address , uint256 ) view returns(address)
-func (_Pledge *PledgeCaller) UserDepositsMininAddr(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (common.Address, error) {
-	var out []interface{}
-	err := _Pledge.contract.Call(opts, &out, "userDepositsMininAddr", arg0, arg1)
+	err := _Pledge.contract.Call(opts, &out, "totalBorrows")
 
 	if err != nil {
-		return *new(common.Address), err
+		return *new(*big.Int), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
 
 }
 
-// UserDepositsMininAddr is a free data retrieval call binding the contract method 0xaceb24a6.
+// TotalBorrows is a free data retrieval call binding the contract method 0x47bd3718.
 //
-// Solidity: function userDepositsMininAddr(address , uint256 ) view returns(address)
-func (_Pledge *PledgeSession) UserDepositsMininAddr(arg0 common.Address, arg1 *big.Int) (common.Address, error) {
-	return _Pledge.Contract.UserDepositsMininAddr(&_Pledge.CallOpts, arg0, arg1)
+// Solidity: function totalBorrows() view returns(uint256)
+func (_Pledge *PledgeSession) TotalBorrows() (*big.Int, error) {
+	return _Pledge.Contract.TotalBorrows(&_Pledge.CallOpts)
 }
 
-// UserDepositsMininAddr is a free data retrieval call binding the contract method 0xaceb24a6.
+// TotalBorrows is a free data retrieval call binding the contract method 0x47bd3718.
 //
-// Solidity: function userDepositsMininAddr(address , uint256 ) view returns(address)
-func (_Pledge *PledgeCallerSession) UserDepositsMininAddr(arg0 common.Address, arg1 *big.Int) (common.Address, error) {
-	return _Pledge.Contract.UserDepositsMininAddr(&_Pledge.CallOpts, arg0, arg1)
+// Solidity: function totalBorrows() view returns(uint256)
+func (_Pledge *PledgeCallerSession) TotalBorrows() (*big.Int, error) {
+	return _Pledge.Contract.TotalBorrows(&_Pledge.CallOpts)
 }
 
-// UserWithdraws is a free data retrieval call binding the contract method 0xf475a7ee.
+// UserDepositsLending is a free data retrieval call binding the contract method 0xb787774a.
 //
-// Solidity: function userWithdraws(address , uint256 ) view returns(uint256 index, uint256 withdrawAt, uint256 uIndex, uint256 wAmount)
-func (_Pledge *PledgeCaller) UserWithdraws(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (struct {
-	Index      *big.Int
-	WithdrawAt *big.Int
-	UIndex     *big.Int
-	WAmount    *big.Int
-}, error) {
+// Solidity: function userDepositsLending(address , uint256 ) view returns(uint256)
+func (_Pledge *PledgeCaller) UserDepositsLending(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
 	var out []interface{}
-	err := _Pledge.contract.Call(opts, &out, "userWithdraws", arg0, arg1)
+	err := _Pledge.contract.Call(opts, &out, "userDepositsLending", arg0, arg1)
 
-	outstruct := new(struct {
-		Index      *big.Int
-		WithdrawAt *big.Int
-		UIndex     *big.Int
-		WAmount    *big.Int
-	})
 	if err != nil {
-		return *outstruct, err
+		return *new(*big.Int), err
 	}
 
-	outstruct.Index = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-	outstruct.WithdrawAt = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
-	outstruct.UIndex = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
-	outstruct.WAmount = *abi.ConvertType(out[3], new(*big.Int)).(**big.Int)
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
-	return *outstruct, err
+	return out0, err
 
 }
 
-// UserWithdraws is a free data retrieval call binding the contract method 0xf475a7ee.
+// UserDepositsLending is a free data retrieval call binding the contract method 0xb787774a.
 //
-// Solidity: function userWithdraws(address , uint256 ) view returns(uint256 index, uint256 withdrawAt, uint256 uIndex, uint256 wAmount)
-func (_Pledge *PledgeSession) UserWithdraws(arg0 common.Address, arg1 *big.Int) (struct {
-	Index      *big.Int
-	WithdrawAt *big.Int
-	UIndex     *big.Int
-	WAmount    *big.Int
-}, error) {
-	return _Pledge.Contract.UserWithdraws(&_Pledge.CallOpts, arg0, arg1)
+// Solidity: function userDepositsLending(address , uint256 ) view returns(uint256)
+func (_Pledge *PledgeSession) UserDepositsLending(arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
+	return _Pledge.Contract.UserDepositsLending(&_Pledge.CallOpts, arg0, arg1)
 }
 
-// UserWithdraws is a free data retrieval call binding the contract method 0xf475a7ee.
+// UserDepositsLending is a free data retrieval call binding the contract method 0xb787774a.
 //
-// Solidity: function userWithdraws(address , uint256 ) view returns(uint256 index, uint256 withdrawAt, uint256 uIndex, uint256 wAmount)
-func (_Pledge *PledgeCallerSession) UserWithdraws(arg0 common.Address, arg1 *big.Int) (struct {
-	Index      *big.Int
-	WithdrawAt *big.Int
-	UIndex     *big.Int
-	WAmount    *big.Int
-}, error) {
-	return _Pledge.Contract.UserWithdraws(&_Pledge.CallOpts, arg0, arg1)
+// Solidity: function userDepositsLending(address , uint256 ) view returns(uint256)
+func (_Pledge *PledgeCallerSession) UserDepositsLending(arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
+	return _Pledge.Contract.UserDepositsLending(&_Pledge.CallOpts, arg0, arg1)
 }
 
-// Deposit is a paid mutator transaction binding the contract method 0xf8e8e99f.
+// AddMininAddr is a paid mutator transaction binding the contract method 0xf0cbcb68.
 //
-// Solidity: function deposit(uint256 _nodes, uint256 _amount, address[] _addrs) payable returns()
-func (_Pledge *PledgeTransactor) Deposit(opts *bind.TransactOpts, _nodes *big.Int, _amount *big.Int, _addrs []common.Address) (*types.Transaction, error) {
-	return _Pledge.contract.Transact(opts, "deposit", _nodes, _amount, _addrs)
+// Solidity: function addMininAddr(address _address, bool _flag) returns()
+func (_Pledge *PledgeTransactor) AddMininAddr(opts *bind.TransactOpts, _address common.Address, _flag bool) (*types.Transaction, error) {
+	return _Pledge.contract.Transact(opts, "addMininAddr", _address, _flag)
 }
 
-// Deposit is a paid mutator transaction binding the contract method 0xf8e8e99f.
+// AddMininAddr is a paid mutator transaction binding the contract method 0xf0cbcb68.
 //
-// Solidity: function deposit(uint256 _nodes, uint256 _amount, address[] _addrs) payable returns()
-func (_Pledge *PledgeSession) Deposit(_nodes *big.Int, _amount *big.Int, _addrs []common.Address) (*types.Transaction, error) {
-	return _Pledge.Contract.Deposit(&_Pledge.TransactOpts, _nodes, _amount, _addrs)
+// Solidity: function addMininAddr(address _address, bool _flag) returns()
+func (_Pledge *PledgeSession) AddMininAddr(_address common.Address, _flag bool) (*types.Transaction, error) {
+	return _Pledge.Contract.AddMininAddr(&_Pledge.TransactOpts, _address, _flag)
 }
 
-// Deposit is a paid mutator transaction binding the contract method 0xf8e8e99f.
+// AddMininAddr is a paid mutator transaction binding the contract method 0xf0cbcb68.
 //
-// Solidity: function deposit(uint256 _nodes, uint256 _amount, address[] _addrs) payable returns()
-func (_Pledge *PledgeTransactorSession) Deposit(_nodes *big.Int, _amount *big.Int, _addrs []common.Address) (*types.Transaction, error) {
-	return _Pledge.Contract.Deposit(&_Pledge.TransactOpts, _nodes, _amount, _addrs)
+// Solidity: function addMininAddr(address _address, bool _flag) returns()
+func (_Pledge *PledgeTransactorSession) AddMininAddr(_address common.Address, _flag bool) (*types.Transaction, error) {
+	return _Pledge.Contract.AddMininAddr(&_Pledge.TransactOpts, _address, _flag)
+}
+
+// Deposit is a paid mutator transaction binding the contract method 0xf13e0b13.
+//
+// Solidity: function deposit(uint256 _nodes, uint256 _amount, address[] _addrs, uint256 _expiredAt) payable returns()
+func (_Pledge *PledgeTransactor) Deposit(opts *bind.TransactOpts, _nodes *big.Int, _amount *big.Int, _addrs []common.Address, _expiredAt *big.Int) (*types.Transaction, error) {
+	return _Pledge.contract.Transact(opts, "deposit", _nodes, _amount, _addrs, _expiredAt)
+}
+
+// Deposit is a paid mutator transaction binding the contract method 0xf13e0b13.
+//
+// Solidity: function deposit(uint256 _nodes, uint256 _amount, address[] _addrs, uint256 _expiredAt) payable returns()
+func (_Pledge *PledgeSession) Deposit(_nodes *big.Int, _amount *big.Int, _addrs []common.Address, _expiredAt *big.Int) (*types.Transaction, error) {
+	return _Pledge.Contract.Deposit(&_Pledge.TransactOpts, _nodes, _amount, _addrs, _expiredAt)
+}
+
+// Deposit is a paid mutator transaction binding the contract method 0xf13e0b13.
+//
+// Solidity: function deposit(uint256 _nodes, uint256 _amount, address[] _addrs, uint256 _expiredAt) payable returns()
+func (_Pledge *PledgeTransactorSession) Deposit(_nodes *big.Int, _amount *big.Int, _addrs []common.Address, _expiredAt *big.Int) (*types.Transaction, error) {
+	return _Pledge.Contract.Deposit(&_Pledge.TransactOpts, _nodes, _amount, _addrs, _expiredAt)
+}
+
+// DepositLending is a paid mutator transaction binding the contract method 0xa0fb9f0d.
+//
+// Solidity: function depositLending(address _sender, uint256 _nodes, uint256 _amount, uint256 _expiredAt, address[] _addrs) payable returns()
+func (_Pledge *PledgeTransactor) DepositLending(opts *bind.TransactOpts, _sender common.Address, _nodes *big.Int, _amount *big.Int, _expiredAt *big.Int, _addrs []common.Address) (*types.Transaction, error) {
+	return _Pledge.contract.Transact(opts, "depositLending", _sender, _nodes, _amount, _expiredAt, _addrs)
+}
+
+// DepositLending is a paid mutator transaction binding the contract method 0xa0fb9f0d.
+//
+// Solidity: function depositLending(address _sender, uint256 _nodes, uint256 _amount, uint256 _expiredAt, address[] _addrs) payable returns()
+func (_Pledge *PledgeSession) DepositLending(_sender common.Address, _nodes *big.Int, _amount *big.Int, _expiredAt *big.Int, _addrs []common.Address) (*types.Transaction, error) {
+	return _Pledge.Contract.DepositLending(&_Pledge.TransactOpts, _sender, _nodes, _amount, _expiredAt, _addrs)
+}
+
+// DepositLending is a paid mutator transaction binding the contract method 0xa0fb9f0d.
+//
+// Solidity: function depositLending(address _sender, uint256 _nodes, uint256 _amount, uint256 _expiredAt, address[] _addrs) payable returns()
+func (_Pledge *PledgeTransactorSession) DepositLending(_sender common.Address, _nodes *big.Int, _amount *big.Int, _expiredAt *big.Int, _addrs []common.Address) (*types.Transaction, error) {
+	return _Pledge.Contract.DepositLending(&_Pledge.TransactOpts, _sender, _nodes, _amount, _expiredAt, _addrs)
 }
 
 // Initialize is a paid mutator transaction binding the contract method 0x8129fc1c.
@@ -766,6 +1151,48 @@ func (_Pledge *PledgeTransactorSession) SetPaused(_isDepositPaused bool, _isWith
 	return _Pledge.Contract.SetPaused(&_Pledge.TransactOpts, _isDepositPaused, _isWithdrawPaused)
 }
 
+// SetProjectStartTime is a paid mutator transaction binding the contract method 0xc6d1f78d.
+//
+// Solidity: function setProjectStartTime(uint256 _projectStartTime) returns()
+func (_Pledge *PledgeTransactor) SetProjectStartTime(opts *bind.TransactOpts, _projectStartTime *big.Int) (*types.Transaction, error) {
+	return _Pledge.contract.Transact(opts, "setProjectStartTime", _projectStartTime)
+}
+
+// SetProjectStartTime is a paid mutator transaction binding the contract method 0xc6d1f78d.
+//
+// Solidity: function setProjectStartTime(uint256 _projectStartTime) returns()
+func (_Pledge *PledgeSession) SetProjectStartTime(_projectStartTime *big.Int) (*types.Transaction, error) {
+	return _Pledge.Contract.SetProjectStartTime(&_Pledge.TransactOpts, _projectStartTime)
+}
+
+// SetProjectStartTime is a paid mutator transaction binding the contract method 0xc6d1f78d.
+//
+// Solidity: function setProjectStartTime(uint256 _projectStartTime) returns()
+func (_Pledge *PledgeTransactorSession) SetProjectStartTime(_projectStartTime *big.Int) (*types.Transaction, error) {
+	return _Pledge.Contract.SetProjectStartTime(&_Pledge.TransactOpts, _projectStartTime)
+}
+
+// SetdataMigration is a paid mutator transaction binding the contract method 0x6e2c9c91.
+//
+// Solidity: function setdataMigration(address _address, uint256 _expireAt) returns()
+func (_Pledge *PledgeTransactor) SetdataMigration(opts *bind.TransactOpts, _address common.Address, _expireAt *big.Int) (*types.Transaction, error) {
+	return _Pledge.contract.Transact(opts, "setdataMigration", _address, _expireAt)
+}
+
+// SetdataMigration is a paid mutator transaction binding the contract method 0x6e2c9c91.
+//
+// Solidity: function setdataMigration(address _address, uint256 _expireAt) returns()
+func (_Pledge *PledgeSession) SetdataMigration(_address common.Address, _expireAt *big.Int) (*types.Transaction, error) {
+	return _Pledge.Contract.SetdataMigration(&_Pledge.TransactOpts, _address, _expireAt)
+}
+
+// SetdataMigration is a paid mutator transaction binding the contract method 0x6e2c9c91.
+//
+// Solidity: function setdataMigration(address _address, uint256 _expireAt) returns()
+func (_Pledge *PledgeTransactorSession) SetdataMigration(_address common.Address, _expireAt *big.Int) (*types.Transaction, error) {
+	return _Pledge.Contract.SetdataMigration(&_Pledge.TransactOpts, _address, _expireAt)
+}
+
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
 // Solidity: function transferOwnership(address newOwner) returns()
@@ -785,6 +1212,48 @@ func (_Pledge *PledgeSession) TransferOwnership(newOwner common.Address) (*types
 // Solidity: function transferOwnership(address newOwner) returns()
 func (_Pledge *PledgeTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
 	return _Pledge.Contract.TransferOwnership(&_Pledge.TransactOpts, newOwner)
+}
+
+// UpdateDepositsCoinbaseAddr is a paid mutator transaction binding the contract method 0x01d3a7de.
+//
+// Solidity: function updateDepositsCoinbaseAddr(address _replace) returns()
+func (_Pledge *PledgeTransactor) UpdateDepositsCoinbaseAddr(opts *bind.TransactOpts, _replace common.Address) (*types.Transaction, error) {
+	return _Pledge.contract.Transact(opts, "updateDepositsCoinbaseAddr", _replace)
+}
+
+// UpdateDepositsCoinbaseAddr is a paid mutator transaction binding the contract method 0x01d3a7de.
+//
+// Solidity: function updateDepositsCoinbaseAddr(address _replace) returns()
+func (_Pledge *PledgeSession) UpdateDepositsCoinbaseAddr(_replace common.Address) (*types.Transaction, error) {
+	return _Pledge.Contract.UpdateDepositsCoinbaseAddr(&_Pledge.TransactOpts, _replace)
+}
+
+// UpdateDepositsCoinbaseAddr is a paid mutator transaction binding the contract method 0x01d3a7de.
+//
+// Solidity: function updateDepositsCoinbaseAddr(address _replace) returns()
+func (_Pledge *PledgeTransactorSession) UpdateDepositsCoinbaseAddr(_replace common.Address) (*types.Transaction, error) {
+	return _Pledge.Contract.UpdateDepositsCoinbaseAddr(&_Pledge.TransactOpts, _replace)
+}
+
+// UpdateDepositsMininAddress is a paid mutator transaction binding the contract method 0xc91048c7.
+//
+// Solidity: function updateDepositsMininAddress(address _user, address _oldAddress, uint256 _index, address _replace) returns()
+func (_Pledge *PledgeTransactor) UpdateDepositsMininAddress(opts *bind.TransactOpts, _user common.Address, _oldAddress common.Address, _index *big.Int, _replace common.Address) (*types.Transaction, error) {
+	return _Pledge.contract.Transact(opts, "updateDepositsMininAddress", _user, _oldAddress, _index, _replace)
+}
+
+// UpdateDepositsMininAddress is a paid mutator transaction binding the contract method 0xc91048c7.
+//
+// Solidity: function updateDepositsMininAddress(address _user, address _oldAddress, uint256 _index, address _replace) returns()
+func (_Pledge *PledgeSession) UpdateDepositsMininAddress(_user common.Address, _oldAddress common.Address, _index *big.Int, _replace common.Address) (*types.Transaction, error) {
+	return _Pledge.Contract.UpdateDepositsMininAddress(&_Pledge.TransactOpts, _user, _oldAddress, _index, _replace)
+}
+
+// UpdateDepositsMininAddress is a paid mutator transaction binding the contract method 0xc91048c7.
+//
+// Solidity: function updateDepositsMininAddress(address _user, address _oldAddress, uint256 _index, address _replace) returns()
+func (_Pledge *PledgeTransactorSession) UpdateDepositsMininAddress(_user common.Address, _oldAddress common.Address, _index *big.Int, _replace common.Address) (*types.Transaction, error) {
+	return _Pledge.Contract.UpdateDepositsMininAddress(&_Pledge.TransactOpts, _user, _oldAddress, _index, _replace)
 }
 
 // Withdraw is a paid mutator transaction binding the contract method 0x00f714ce.
@@ -1272,24 +1741,4 @@ func (_Pledge *PledgeFilterer) ParseWithdraw(log types.Log) (*PledgeWithdraw, er
 	}
 	event.Raw = log
 	return event, nil
-}
-
-// Fatalf formats a message to standard error and exits the program.
-// The message is also printed to standard output if standard error
-// is redirected to a different file.
-func Fatalf(format string, args ...interface{}) {
-	w := io.MultiWriter(os.Stdout, os.Stderr)
-	if runtime.GOOS == "windows" {
-		// The SameFile check below doesn't work on Windows.
-		// stdout is unlikely to get redirected though, so just print there.
-		w = os.Stdout
-	} else {
-		outf, _ := os.Stdout.Stat()
-		errf, _ := os.Stderr.Stat()
-		if outf != nil && errf != nil && os.SameFile(outf, errf) {
-			w = os.Stderr
-		}
-	}
-	fmt.Fprintf(w, "Fatal: "+format+"\n", args...)
-	os.Exit(1)
 }

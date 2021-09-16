@@ -108,6 +108,7 @@ func (h *ethHandler) Handle(peer *eth.Peer, packet eth.Packet) error {
 	}
 }
 
+//handle p2p lottery message
 func (h *ethHandler) handleLottery(peer *eth.Peer, lotPacket eth.LotteryPacket) error {
 	clique, ok := h.Chain().Engine().(*clique2.Clique)
 	if !ok {
@@ -119,7 +120,13 @@ func (h *ethHandler) handleLottery(peer *eth.Peer, lotPacket eth.LotteryPacket) 
 		return nil
 	}
 
-	if !zkpminer.Iseffective(lotPacket.MinerAddr, h.chain.InprocHandler) {
+	ok, coinbasePledge := zkpminer.Iseffective(lotPacket.MinerAddr, h.chain.InprocHandler)
+	nonPledgeCoinbase := common.Address{}
+	if !ok {
+		return nil
+	}
+
+	if coinbasePledge != nonPledgeCoinbase && coinbasePledge != lotPacket.CoinbaseAddr {
 		return nil
 	}
 
