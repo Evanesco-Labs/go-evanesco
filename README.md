@@ -131,9 +131,9 @@ INFO [08-25|20:25:31.130] Imported new chain segment               blocks=1  txs
 INFO [08-25|20:25:37.128] Imported new chain segment               blocks=1  txs=0 mgas=0.000 elapsed="216.098µs" mgasps=0.000 number=498 hash=fef60d..a92615 dirty=0.00B
 INFO [08-25|20:25:43.612] Imported new chain segment               blocks=1  txs=0 mgas=0.000 elapsed="725.186µs" mgasps=0.000 number=499 hash=0043f8..05f977 dirty=0.00B
 ```
-The http RPC port is 8545 and the WebSocket rpc port is 7777. Try use RPC request to check block number with this command:
+The http RPC port is 8546 and the WebSocket rpc port is 7778. Try use RPC request to check block number with this command:
 ```shell
-curl --location --request POST 'localhost:8545/' \
+curl --location --request POST 'localhost:8546/' \
 --header 'Content-Type: application/json' \
 --data-raw '{
 	"jsonrpc":"2.0",
