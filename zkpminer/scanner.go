@@ -22,7 +22,10 @@ var zero = new(big.Int).SetInt64(int64(0))
 var NewHeaderTimeoutDuration = time.Minute
 
 var (
-	InvalidTaskStepErr      = errors.New("invalid task step")
+	InvalidTaskStepErr = errors.New("invalid task step")
+)
+
+var (
 	NotCliqueConsensusError = errors.New("no clique engine, invalid Evanesco node")
 	NotEffectiveAddrError   = errors.New("miner address not staked")
 	ZKPProofVerifyError     = errors.New("ZKP proof verify failed")
@@ -133,7 +136,7 @@ func (s *Scanner) Loop() {
 			s.LastBlockHeight = height
 			if s.IfCoinBase(header) {
 				if _, ok := s.miner.Workers[header.BestLottery.MinerAddr]; ok {
-					log.Info("Congratulations your work has the best score!")
+					log.Info("Congratulations you got the best score!", "height", header.Number.Uint64())
 				}
 
 				log.Info("start new mining epoch")
@@ -205,8 +208,8 @@ func (s *Scanner) Submit(task *Task) {
 	// Submit check if the lottery has the best score
 	score := (*hexutil.Big)(task.lottery.Score())
 	log.Info("submiting work",
-		"\nminer address", task.minerAddr,
-		"\ncoinbase address", task.CoinbaseAddr,
+		"\nminer address", task.lottery.MinerAddr,
+		"\ncoinbase address", task.lottery.CoinbaseAddr,
 		"\nscore", score.String(),
 	)
 
@@ -233,17 +236,17 @@ func (s *Scanner) Submit(task *Task) {
 
 		err := rpcExp.Client.CallContext(ctx, nil, "eth_lotterySubmit", submit)
 		if err != nil {
-			log.Error("rpc submit work error:", "err", err)
-			if err == NotEffectiveAddrError {
+			log.Error("submit work error", "err", err)
+			if err.Error() == NotEffectiveAddrError.Error() {
 				Fatalf("Miner address not effective")
 			}
-			if err == ZKPProofVerifyError {
+			if err.Error() == ZKPProofVerifyError.Error() {
 				Fatalf("ZKP proof verify failed, please check miner setting and config")
 			}
-			if err == NotPledgeCoinbaseError {
+			if err.Error() == NotPledgeCoinbaseError.Error() {
 				Fatalf(NotPledgeCoinbaseError.Error())
 			}
-			if err != NotEffectiveAddrError && err != ZKPProofVerifyError && err != NotPledgeCoinbaseError {
+			if err.Error() != NotEffectiveAddrError.Error() && err.Error() != ZKPProofVerifyError.Error() && err.Error() != NotPledgeCoinbaseError.Error() {
 				log.Info("try to connect another node")
 				s.miner.updateWS()
 				//todo: retry submit after updateWs success

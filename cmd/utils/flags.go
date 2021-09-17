@@ -1491,8 +1491,6 @@ func setZKPMiner(ctx *cli.Context, cfg *zkpminer.Config) {
 	var coinbaseAddr common.Address
 	if ctx.GlobalIsSet(ZKPMinerCoinbaseAddress.Name) {
 		coinbaseAddr = common.HexToAddress(ctx.GlobalString(ZKPMinerCoinbaseAddress.Name))
-	} else {
-		coinbaseAddr = minerList[0].Address
 	}
 
 	pkPath := "./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx"
