@@ -185,16 +185,20 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 		if coinbasePledge == emptyAddr {
 			if miner.CoinbaseAddr == emptyAddr {
 				miner.CoinbaseAddr = minerAddress
+				return
 			}
 			return
 		}
 		//coinbase address is set, use pledge coinbase address by default
 		if coinbasePledge != emptyAddr {
-			if miner.CoinbaseAddr != coinbasePledge {
-				Fatalf(NotPledgeCoinbaseError.Error())
-			}
 			if miner.CoinbaseAddr == emptyAddr {
 				miner.CoinbaseAddr = coinbasePledge
+				return
+			}
+			if miner.CoinbaseAddr != coinbasePledge {
+				log.Info("miner coinbase address:" + miner.CoinbaseAddr.String() + ", fortress coinbase address:" + coinbasePledge.String())
+				Fatalf(NotPledgeCoinbaseError.Error())
+				return
 			}
 			return
 		}
@@ -332,6 +336,9 @@ func (m *Miner) updateWS() {
 		if res == true {
 			//check miner address effective
 			checkEffective := func() {
+				defer func() {
+					m.scanner.CoinbaseAddr = m.CoinbaseAddr
+				}()
 				evaClient := evaclient.NewClient(exp.Client)
 				caller, err := NewPledgeCaller(PledgeContract, evaClient)
 				if err != nil {
@@ -350,16 +357,20 @@ func (m *Miner) updateWS() {
 					if coinbasePledge == emptyAddr {
 						if m.CoinbaseAddr == emptyAddr {
 							m.CoinbaseAddr = m.config.MinerList[0].Address
+							return
 						}
 						return
 					}
 					//coinbase address is set, use pledge coinbase address by default
 					if coinbasePledge != emptyAddr {
-						if m.CoinbaseAddr != coinbasePledge {
-							Fatalf(NotPledgeCoinbaseError.Error())
-						}
 						if m.CoinbaseAddr == emptyAddr {
 							m.CoinbaseAddr = coinbasePledge
+							return
+						}
+						if m.CoinbaseAddr != coinbasePledge {
+							log.Info("miner coinbase address:" + m.CoinbaseAddr.String() + ", fortress coinbase address:" + coinbasePledge.String())
+							Fatalf(NotPledgeCoinbaseError.Error())
+							return
 						}
 						return
 					}

@@ -189,9 +189,15 @@ type Clique struct {
 
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
+
+	bestLotteryLock sync.Mutex //best lottery write lock
 }
 
 func (c *Clique) ResetBestLotteryandScore() {
+	c.bestLotteryLock.Lock()
+	defer func() {
+		c.bestLotteryLock.Unlock()
+	}()
 	log.Info("reset best lottery")
 	c.bestLottery = types.Lottery{
 		CoinbaseAddr:        common.Address{},
@@ -210,6 +216,10 @@ func (c *Clique) IfLotteryBetterThanBest(l types.Lottery) bool {
 }
 
 func (c *Clique) SetInboundLotteryScore(l types.Lottery) {
+	c.bestLotteryLock.Lock()
+	defer func() {
+		c.bestLotteryLock.Unlock()
+	}()
 	if l.Score().CmpAbs(c.bestScore) != 1 {
 		return
 	}
