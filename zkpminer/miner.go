@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/zkpminer/keypair"
 	"github.com/ethereum/go-ethereum/zkpminer/problem"
+	"math/rand"
 	"os"
 	"runtime"
 	"sync"
@@ -42,8 +43,9 @@ const (
 	RPCTIMEOUT       = time.Minute
 )
 
-var WSUrlTryRound = 3
+var WSUrlTryRound = 5
 var RetryWSRPCWaitDuration = time.Second * 5
+var RetryJitterMaxDuration = 1000 //millisecond
 
 type Backend interface {
 	BlockChain() *core.BlockChain
@@ -178,7 +180,7 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 		minerAddress := config.MinerList[0].Address
 		ok, coinbasePledge := Iseffective(minerAddress, backend.BlockChain().InprocHandler)
 		if !ok {
-			Fatalf("Miner address not staked %v", minerAddress.String())
+			log.Error("Miner address not staked", "address", minerAddress.String())
 		}
 		emptyAddr := common.Address{}
 		//coinbase address is not set on pledge, use miner address by default
@@ -196,8 +198,8 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 				return
 			}
 			if miner.CoinbaseAddr != coinbasePledge {
+				log.Error(NotPledgeCoinbaseError.Error())
 				log.Info("miner coinbase address:" + miner.CoinbaseAddr.String() + ", fortress coinbase address:" + coinbasePledge.String())
-				Fatalf(NotPledgeCoinbaseError.Error())
 				return
 			}
 			return
@@ -312,7 +314,8 @@ func (m *Miner) updateWS() {
 	var err error
 	for i := 0; i < WSUrlTryRound; i++ {
 		for _, url := range m.urlList {
-			time.Sleep(RetryWSRPCWaitDuration)
+			jitter := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(RetryJitterMaxDuration)
+			time.Sleep(RetryWSRPCWaitDuration + time.Millisecond*time.Duration(jitter))
 			if url == exp.WsUrl {
 				continue
 			}
@@ -344,36 +347,35 @@ func (m *Miner) updateWS() {
 				if err != nil {
 					Fatalf("New Pledge caller error %v", err)
 				}
-				for _, minerKey := range m.config.MinerList {
-					ok, coinbasePledge, err := caller.IseffectiveNew(&bind.CallOpts{Pending: false}, minerKey.Address)
-					if err != nil {
-						Fatalf("call pledge contract abi IseffectiveNew error %v", err)
-					}
-					if !ok {
-						Fatalf("Miner address not staked %v", minerKey.Address.String())
-					}
-					emptyAddr := common.Address{}
-					//coinbase address is not set on pledge, use miner address by default
-					if coinbasePledge == emptyAddr {
-						if m.CoinbaseAddr == emptyAddr {
-							m.CoinbaseAddr = m.config.MinerList[0].Address
-							return
-						}
+				minerKey := m.config.MinerList[0]
+				ok, coinbasePledge, err := caller.IseffectiveNew(&bind.CallOpts{Pending: false}, minerKey.Address)
+				if err != nil {
+					Fatalf("call pledge contract abi IseffectiveNew error %v", err)
+				}
+				if !ok {
+					log.Error(NotEffectiveAddrError.Error(), "address", minerKey.Address.String())
+				}
+				emptyAddr := common.Address{}
+				//coinbase address is not set on pledge, use miner address by default
+				if coinbasePledge == emptyAddr {
+					if m.CoinbaseAddr == emptyAddr {
+						m.CoinbaseAddr = minerKey.Address
 						return
 					}
-					//coinbase address is set, use pledge coinbase address by default
-					if coinbasePledge != emptyAddr {
-						if m.CoinbaseAddr == emptyAddr {
-							m.CoinbaseAddr = coinbasePledge
-							return
-						}
-						if m.CoinbaseAddr != coinbasePledge {
-							log.Info("miner coinbase address:" + m.CoinbaseAddr.String() + ", fortress coinbase address:" + coinbasePledge.String())
-							Fatalf(NotPledgeCoinbaseError.Error())
-							return
-						}
+					return
+				}
+				//coinbase address is set, use pledge coinbase address by default
+				if coinbasePledge != emptyAddr {
+					if m.CoinbaseAddr == emptyAddr {
+						m.CoinbaseAddr = coinbasePledge
 						return
 					}
+					if m.CoinbaseAddr != coinbasePledge {
+						log.Error(NotPledgeCoinbaseError.Error())
+						log.Info("miner coinbase address:" + m.CoinbaseAddr.String() + ", fortress coinbase address:" + coinbasePledge.String())
+						return
+					}
+					return
 				}
 			}
 

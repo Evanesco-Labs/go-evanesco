@@ -12,7 +12,7 @@ import (
 	"runtime"
 )
 
-var PledgeContract = common.HexToAddress("0x9Cf113d5c6f3aA616D690e7B2acd220f3b63E6ed")
+var PledgeContract = common.HexToAddress("0x5C54891860a1b7fec6B6bb1B4402e990503785FD")
 
 func Iseffective(miner common.Address, server *rpc.Server) (bool, common.Address) {
 	client := evaclient.NewClient(rpc.DialInProc(server))

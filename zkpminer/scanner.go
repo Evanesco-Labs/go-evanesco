@@ -27,7 +27,7 @@ var (
 
 var (
 	NotCliqueConsensusError = errors.New("no clique engine, invalid Evanesco node")
-	NotEffectiveAddrError   = errors.New("miner address not staked")
+	NotEffectiveAddrError   = errors.New("miner address not staked or not in valid time period")
 	ZKPProofVerifyError     = errors.New("ZKP proof verify failed")
 	NotPledgeCoinbaseError  = errors.New("coinbase address conflict, check the coinbase address setting in Fortress")
 )
@@ -238,18 +238,22 @@ func (s *Scanner) Submit(task *Task) {
 		if err != nil {
 			log.Error("submit work error", "err", err)
 			if err.Error() == NotEffectiveAddrError.Error() {
-				Fatalf("Miner address not effective")
+				log.Error(NotEffectiveAddrError.Error())
+				return
 			}
 			if err.Error() == ZKPProofVerifyError.Error() {
 				Fatalf("ZKP proof verify failed, please check miner setting and config")
+				return
 			}
 			if err.Error() == NotPledgeCoinbaseError.Error() {
-				Fatalf(NotPledgeCoinbaseError.Error())
+				log.Error(NotPledgeCoinbaseError.Error())
+				return
 			}
 			if err.Error() != NotEffectiveAddrError.Error() && err.Error() != ZKPProofVerifyError.Error() && err.Error() != NotPledgeCoinbaseError.Error() {
 				log.Info("try to connect another node")
 				s.miner.updateWS()
 				//todo: retry submit after updateWs success
+				return
 			}
 		}
 	}
