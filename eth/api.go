@@ -46,7 +46,7 @@ import (
 
 var (
 	NotCliqueConsensusError = errors.New("no clique engine, invalid Evanesco node")
-	NotEffectiveAddrError   = errors.New("miner address not staked")
+	NotEffectiveAddrError   = errors.New("miner address not staked or not in valid time period")
 	ZKPProofVerifyError     = errors.New("ZKP proof verify failed")
 	NotPledgeCoinbaseError  = errors.New("coinbase address conflict, check the coinbase address setting in Fortress")
 )
