@@ -212,7 +212,7 @@ $ eva --your-favourite-flags dumpconfig
 #### Docker quick start
 Using `docker build` Docker can build images automatically by reading the instructions from a Dockerfile. Traditionally, the `Dockerfile` is called `Dockerfile` and located in the root of the context.You use the `-f` flag with `docker build` to point to a Dockerfile anywhere in your file system.
 
-In addition, we have built the relevant images required for the avis network such as go-miner, evanesco, etc., and uploaded them to the docker hub. We strongly recommend that you can pull our built images directly from our docker repository so that you can quickly start the avis node. For more information, click on the link below:[evanesconetworks](https://hub.docker.com/repositories)
+In addition, we have built the relevant images required for the avis network such as `go-miner`, `evanesco`, etc., and uploaded them to the docker hub. We strongly recommend that you can pull our built images directly from our docker repository so that you can quickly start the avis node. For more information, click on the link below:[evanesconetworks](https://hub.docker.com/repositories)
 ### Programmatically interfacing `eva` nodes
 
 As a developer, sooner rather than later you'll want to start interacting with `eva` and the
