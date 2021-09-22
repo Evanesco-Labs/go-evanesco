@@ -213,9 +213,8 @@ type BlockChain struct {
 	shouldPreserve  func(*types.Block) bool        // Function used to determine whether should preserve the given block.
 	terminateInsert func(common.Hash, uint64) bool // Testing hook used to terminate ancient receipt chain insertion.
 
-	verifier           *problem.Verifier
-	lastCoinbaseHeader *types.Header
-	InprocHandler      *rpc.Server
+	verifier      *problem.Verifier
+	InprocHandler *rpc.Server
 }
 
 // NewBlockChain returns a fully initialised block chain using information
@@ -252,7 +251,7 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 		futureBlocks:   futureBlocks,
 		engine:         engine,
 		vmConfig:       vmConfig,
-		InprocHandler: inprocServer,
+		InprocHandler:  inprocServer,
 	}
 	bc.validator = NewBlockValidator(chainConfig, bc, engine)
 	bc.prefetcher = newStatePrefetcher(chainConfig, bc, engine)
@@ -400,7 +399,7 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 	}
 	// Take ownership of this particular state
 	go bc.update()
-	go bc.resetLotteryLoop()
+
 	if txLookupLimit != nil {
 		bc.txLookupLimit = *txLookupLimit
 
@@ -2289,32 +2288,17 @@ func (bc *BlockChain) update() {
 	}
 }
 
-func (bc *BlockChain) resetLotteryLoop() {
-	clique, ok := bc.Engine().(*clique2.Clique)
-	if !ok {
-		return
+func (bc *BlockChain) GetLatestCoinbaseHeader() *types.Header {
+	currHeader := bc.CurrentHeader()
+	if currHeader.IsZKPRewardBlock() {
+		return currHeader
 	}
-	blockEventCh := make(chan ChainHeadEvent)
-	sub := bc.SubscribeChainHeadEvent(blockEventCh)
-	for {
-		select {
-		case ev := <-blockEventCh:
-			if ev.Block.Header().IsZKPRewardBlock() {
-				clique.ResetBestLotteryandScore()
-				bc.lastCoinbaseHeader = bc.CurrentHeader()
-			}
-		case <-sub.Err():
-			bc.Stop()
-		}
-	}
-}
-
-func (bc *BlockChain) GetLastCoinbaseHeader() *types.Header {
-	return bc.lastCoinbaseHeader
+	delta := new(big.Int).Mod(currHeader.Number, new(big.Int).SetUint64(uint64(100)))
+	return bc.GetHeaderByNumber(new(big.Int).Add(currHeader.Number, new(big.Int).Neg(delta)).Uint64())
 }
 
 func (bc *BlockChain) VerifyLottery(l types.Lottery, sig []byte) bool {
-	return bc.verifier.VerifyLottery(&l, sig, bc.lastCoinbaseHeader)
+	return bc.verifier.VerifyLottery(&l, sig, bc.GetLatestCoinbaseHeader())
 }
 
 func (bc *BlockChain) HandleValidLottery(l types.Lottery) {

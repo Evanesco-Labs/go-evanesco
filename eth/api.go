@@ -105,7 +105,7 @@ func (api *PublicEthereumAPI) LotterySubmit(submit types.LotterySubmit) error {
 	//handle local solved lottery
 	if !api.e.BlockChain().VerifyLottery(submit.Lottery, submit.Signature[:]) {
 		log.Warn("ZKP miner submit invalid lottery", "hash", submit.Lottery.Hash())
-		return ZKPProofVerifyError
+		return nil
 	}
 	api.e.BlockChain().HandleValidLottery(submit.Lottery)
 	api.e.handler.BroadcastLottery(eth.LotteryPacket(submit))

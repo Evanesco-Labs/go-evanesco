@@ -169,6 +169,11 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 	return signer, nil
 }
 
+type lotteryBackup struct {
+	lastEpochBestLottery types.Lottery
+	height               uint64
+}
+
 // Clique is the proof-of-authority consensus engine proposed to support the
 // Ethereum testnet following the Ropsten attacks.
 type Clique struct {
@@ -184,20 +189,27 @@ type Clique struct {
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
 
-	bestLottery types.Lottery //Best lottery ever received in this mining epoch
-	bestScore   *big.Int      //Best score ever received in this mining epoch
-
+	bestLottery   types.Lottery //Best lottery ever received in this mining epoch
+	bestScore     *big.Int      //Best score ever received in this mining epoch
+	lotteryBackup lotteryBackup //Best lottery of last mining epoch or Best lottery of this mining epoch when reorg the last block in this epoch.
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
 
 	bestLotteryLock sync.Mutex //best lottery write lock
 }
 
-func (c *Clique) ResetBestLotteryandScore() {
+func (c *Clique) ResetBestLotteryandScore(height uint64) {
 	c.bestLotteryLock.Lock()
 	defer func() {
 		c.bestLotteryLock.Unlock()
 	}()
+
+	//backup best lottery before reset, in case reorg the last block in this mining epoch
+	c.lotteryBackup = lotteryBackup{
+		lastEpochBestLottery: c.bestLottery.DeepCopy(),
+		height:               height,
+	}
+
 	log.Info("reset best lottery")
 	c.bestLottery = types.Lottery{
 		CoinbaseAddr:        common.Address{},
@@ -254,7 +266,7 @@ func New(config *params.CliqueConfig, db ethdb.Database) *Clique {
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
 	}
-	cli.ResetBestLotteryandScore()
+	cli.ResetBestLotteryandScore(uint64(0))
 	return cli
 }
 
@@ -618,7 +630,11 @@ func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 
 	// Add best lottery to block header
 	if header.IsZKPRewardBlock() {
-		header.BestLottery = c.bestLottery.DeepCopy()
+		if c.lotteryBackup.height == header.Number.Uint64() {
+			header.BestLottery = c.lotteryBackup.lastEpochBestLottery.DeepCopy()
+		} else {
+			header.BestLottery = c.bestLottery.DeepCopy()
+		}
 	}
 	return nil
 }
@@ -630,8 +646,8 @@ func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Heade
 	log.Debug("finalized block", "number", header.Number)
 	empty := common.Address{}
 	if header.IsZKPRewardBlock() {
+		c.ResetBestLotteryandScore(header.Number.Uint64())
 		if header.BestLottery.CoinbaseAddr != empty {
-			c.ResetBestLotteryandScore()
 			state.AddBalance(header.BestLottery.CoinbaseAddr, GpowBlockReward)
 		}
 	}
