@@ -242,7 +242,7 @@ func (s *Scanner) Submit(task *Task) {
 				return
 			}
 			if err.Error() == ZKPProofVerifyError.Error() {
-				Fatalf("ZKP proof verify failed, please check miner setting and config")
+				log.Error("ZKP proof verify failed, please check miner setting and config")
 				return
 			}
 			if err.Error() == NotPledgeCoinbaseError.Error() {
