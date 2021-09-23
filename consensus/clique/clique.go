@@ -205,9 +205,11 @@ func (c *Clique) ResetBestLotteryandScore(height uint64) {
 	}()
 
 	//backup best lottery before reset, in case reorg the last block in this mining epoch
-	c.lotteryBackup = lotteryBackup{
-		lastEpochBestLottery: c.bestLottery.DeepCopy(),
-		height:               height,
+	if c.lotteryBackup.height < height {
+		c.lotteryBackup = lotteryBackup{
+			lastEpochBestLottery: c.bestLottery.DeepCopy(),
+			height:               height,
+		}
 	}
 
 	log.Info("reset best lottery")

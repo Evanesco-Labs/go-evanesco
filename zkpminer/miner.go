@@ -295,17 +295,32 @@ func NewMiner(config Config) (*Miner, error) {
 }
 
 func (m *Miner) updateWS() {
-
 	if m.scanner.IsUpdating() {
 		return
 	}
-
 	m.scanner.close()
 	exp, ok := m.scanner.explorer.(*RpcExplorer)
 	if !ok {
 		Fatalf("Full node miner disconnected from Avis Network more than %v", NewHeaderTimeoutDuration.String())
 		return
 	}
+	//clean old rpc explorer and new
+	oldURL := exp.WsUrl
+	go func() {
+		if exp.Sub == nil || exp.Client == nil {
+			return
+		}
+		exp.Sub.Unsubscribe()
+		exp.Client.Close()
+	}()
+	remoteExp := RpcExplorer{
+		Client:     new(rpc.Client),
+		Sub:        new(rpc.ClientSubscription),
+		HeaderCh:   make(chan *types.Header),
+		rpcTimeOut: RPCTIMEOUT,
+		WsUrl:      oldURL,
+	}
+	m.scanner.explorer = &remoteExp
 
 	//set scanner status updating
 	atomic.StoreInt32(&m.scanner.running, int32(2))
@@ -316,23 +331,23 @@ func (m *Miner) updateWS() {
 		for _, url := range m.urlList {
 			jitter := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(RetryJitterMaxDuration)
 			time.Sleep(RetryWSRPCWaitDuration + time.Millisecond*time.Duration(jitter))
-			if url == exp.WsUrl {
+			if url == remoteExp.WsUrl {
 				continue
 			}
-			exp.Client, err = rpc.Dial(url)
+			remoteExp.Client, err = rpc.Dial(url)
 			if err != nil {
 				log.Warn("Websocket dial Evanesco node err", "err", err)
 				continue
 			}
 
-			exp.Sub, err = exp.Client.EthSubscribe(context.Background(), exp.HeaderCh, "newHeads")
+			remoteExp.Sub, err = remoteExp.Client.EthSubscribe(context.Background(), remoteExp.HeaderCh, "newHeads")
 			if err != nil {
 				log.Warn("Subscribe block err", "err", err)
 				continue
 			}
 
 			res = true
-			exp.WsUrl = url
+			remoteExp.WsUrl = url
 			log.Info("Connected node WebSocket URL", "url", url)
 			break
 		}
@@ -342,7 +357,7 @@ func (m *Miner) updateWS() {
 				defer func() {
 					m.scanner.CoinbaseAddr = m.CoinbaseAddr
 				}()
-				evaClient := evaclient.NewClient(exp.Client)
+				evaClient := evaclient.NewClient(remoteExp.Client)
 				caller, err := NewPledgeCaller(PledgeContract, evaClient)
 				if err != nil {
 					Fatalf("New Pledge caller error %v", err)
@@ -383,7 +398,7 @@ func (m *Miner) updateWS() {
 			break
 		} else {
 			//reset url to try this url again
-			exp.WsUrl = ""
+			remoteExp.WsUrl = ""
 		}
 	}
 
