@@ -65,7 +65,7 @@ var (
 
 	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
 
-	GpowBlockReward = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(500)))
+	GpowBlockReward = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(1000)))
 
 	diffInTurn = big.NewInt(2) // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
