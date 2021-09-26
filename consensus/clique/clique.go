@@ -50,7 +50,8 @@ const (
 	inmemorySnapshots  = 128  // Number of recent vote snapshots to keep in memory
 	inmemorySignatures = 4096 // Number of recent block signatures to keep in memory
 
-	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
+	wiggleTime              = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
+	AvsRewardIncreaseHeight = uint64(284500)
 )
 
 // Clique proof-of-authority protocol constants.
@@ -65,7 +66,8 @@ var (
 
 	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
 
-	GpowBlockReward = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(1000)))
+	GpowBlockReward    = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(1000)))
+	PreGpowBlockReward = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(500)))
 
 	diffInTurn = big.NewInt(2) // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
@@ -650,7 +652,11 @@ func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Heade
 	if header.IsZKPRewardBlock() {
 		c.ResetBestLotteryandScore(header.Number.Uint64())
 		if header.BestLottery.CoinbaseAddr != empty {
-			state.AddBalance(header.BestLottery.CoinbaseAddr, GpowBlockReward)
+			if header.Number.Uint64() < AvsRewardIncreaseHeight {
+				state.AddBalance(header.BestLottery.CoinbaseAddr, PreGpowBlockReward)
+			} else {
+				state.AddBalance(header.BestLottery.CoinbaseAddr, GpowBlockReward)
+			}
 		}
 	}
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
