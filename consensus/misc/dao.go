@@ -21,9 +21,9 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/Evanesco-Labs/go-evanesco/core/state"
+	"github.com/Evanesco-Labs/go-evanesco/core/types"
+	"github.com/Evanesco-Labs/go-evanesco/params"
 )
 
 var (

@@ -19,7 +19,7 @@ package rpc
 import (
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/metrics"
+	"github.com/Evanesco-Labs/go-evanesco/metrics"
 )
 
 var (

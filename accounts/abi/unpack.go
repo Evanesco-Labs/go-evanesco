@@ -22,7 +22,7 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/Evanesco-Labs/go-evanesco/common"
 )
 
 var (

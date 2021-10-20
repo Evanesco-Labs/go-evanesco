@@ -59,9 +59,9 @@ import (
 	"time"
 
 	"github.com/cespare/cp"
-	"github.com/ethereum/go-ethereum/crypto/signify"
-	"github.com/ethereum/go-ethereum/internal/build"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/Evanesco-Labs/go-evanesco/crypto/signify"
+	"github.com/Evanesco-Labs/go-evanesco/internal/build"
+	"github.com/Evanesco-Labs/go-evanesco/params"
 )
 
 var (

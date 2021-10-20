@@ -21,17 +21,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/consensus/clique"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/eth/downloader"
-	"github.com/ethereum/go-ethereum/ethdb/memorydb"
-	"github.com/ethereum/go-ethereum/event"
-	"github.com/ethereum/go-ethereum/trie"
+	"github.com/Evanesco-Labs/go-evanesco/common"
+	"github.com/Evanesco-Labs/go-evanesco/consensus/clique"
+	"github.com/Evanesco-Labs/go-evanesco/core"
+	"github.com/Evanesco-Labs/go-evanesco/core/rawdb"
+	"github.com/Evanesco-Labs/go-evanesco/core/state"
+	"github.com/Evanesco-Labs/go-evanesco/core/types"
+	"github.com/Evanesco-Labs/go-evanesco/core/vm"
+	"github.com/Evanesco-Labs/go-evanesco/eth/downloader"
+	"github.com/Evanesco-Labs/go-evanesco/ethdb/memorydb"
+	"github.com/Evanesco-Labs/go-evanesco/event"
+	"github.com/Evanesco-Labs/go-evanesco/trie"
 )
 
 type mockBackend struct {

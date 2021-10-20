@@ -2,13 +2,13 @@ package zkpminer
 
 import (
 	"errors"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/zkpminer/keypair"
-	"github.com/ethereum/go-ethereum/zkpminer/problem"
-	"github.com/ethereum/go-ethereum/zkpminer/vrf"
+	"github.com/Evanesco-Labs/go-evanesco/common"
+	"github.com/Evanesco-Labs/go-evanesco/core/types"
+	"github.com/Evanesco-Labs/go-evanesco/crypto"
+	"github.com/Evanesco-Labs/go-evanesco/log"
+	"github.com/Evanesco-Labs/go-evanesco/zkpminer/keypair"
+	"github.com/Evanesco-Labs/go-evanesco/zkpminer/problem"
+	"github.com/Evanesco-Labs/go-evanesco/zkpminer/vrf"
 	"sync"
 	"sync/atomic"
 )

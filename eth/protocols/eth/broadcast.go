@@ -17,11 +17,11 @@
 package eth
 
 import (
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/Evanesco-Labs/go-evanesco/log"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/Evanesco-Labs/go-evanesco/common"
+	"github.com/Evanesco-Labs/go-evanesco/core/types"
 )
 
 const (

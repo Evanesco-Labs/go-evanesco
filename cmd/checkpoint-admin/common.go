@@ -19,15 +19,15 @@ package main
 import (
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/external"
-	"github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/contracts/checkpointoracle"
-	"github.com/ethereum/go-ethereum/evaclient"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/Evanesco-Labs/go-evanesco/accounts"
+	"github.com/Evanesco-Labs/go-evanesco/accounts/abi/bind"
+	"github.com/Evanesco-Labs/go-evanesco/accounts/external"
+	"github.com/Evanesco-Labs/go-evanesco/cmd/utils"
+	"github.com/Evanesco-Labs/go-evanesco/common"
+	"github.com/Evanesco-Labs/go-evanesco/contracts/checkpointoracle"
+	"github.com/Evanesco-Labs/go-evanesco/evaclient"
+	"github.com/Evanesco-Labs/go-evanesco/params"
+	"github.com/Evanesco-Labs/go-evanesco/rpc"
 	"gopkg.in/urfave/cli.v1"
 )
 

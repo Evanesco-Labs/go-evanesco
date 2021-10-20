@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/Evanesco-Labs/go-evanesco/common"
+	"github.com/Evanesco-Labs/go-evanesco/common/hexutil"
+	"github.com/Evanesco-Labs/go-evanesco/common/math"
 )
 
 // GnosisSafeTx is a type to parse the safe-tx returned by the relayer,

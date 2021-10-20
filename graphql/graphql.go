@@ -25,15 +25,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/eth/filters"
-	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/Evanesco-Labs/go-evanesco"
+	"github.com/Evanesco-Labs/go-evanesco/common"
+	"github.com/Evanesco-Labs/go-evanesco/common/hexutil"
+	"github.com/Evanesco-Labs/go-evanesco/common/math"
+	"github.com/Evanesco-Labs/go-evanesco/core/state"
+	"github.com/Evanesco-Labs/go-evanesco/core/types"
+	"github.com/Evanesco-Labs/go-evanesco/eth/filters"
+	"github.com/Evanesco-Labs/go-evanesco/internal/ethapi"
+	"github.com/Evanesco-Labs/go-evanesco/rpc"
 )
 
 var (

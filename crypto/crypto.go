@@ -30,9 +30,9 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/Evanesco-Labs/go-evanesco/common"
+	"github.com/Evanesco-Labs/go-evanesco/common/math"
+	"github.com/Evanesco-Labs/go-evanesco/rlp"
 	"golang.org/x/crypto/sha3"
 )
 
