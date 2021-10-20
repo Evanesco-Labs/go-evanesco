@@ -1,4 +1,4 @@
-module github.com/ethereum/go-ethereum
+module github.com/Evanesco-Labs/go-evanesco
 
 go 1.15
 

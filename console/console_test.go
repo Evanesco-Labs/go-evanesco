@@ -26,15 +26,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/consensus/ethash"
-	"github.com/ethereum/go-ethereum/console/prompt"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/eth"
-	"github.com/ethereum/go-ethereum/eth/ethconfig"
-	"github.com/ethereum/go-ethereum/internal/jsre"
-	"github.com/ethereum/go-ethereum/miner"
-	"github.com/ethereum/go-ethereum/node"
+	"github.com/Evanesco-Labs/go-evanesco/common"
+	"github.com/Evanesco-Labs/go-evanesco/consensus/ethash"
+	"github.com/Evanesco-Labs/go-evanesco/console/prompt"
+	"github.com/Evanesco-Labs/go-evanesco/core"
+	"github.com/Evanesco-Labs/go-evanesco/eth"
+	"github.com/Evanesco-Labs/go-evanesco/eth/ethconfig"
+	"github.com/Evanesco-Labs/go-evanesco/internal/jsre"
+	"github.com/Evanesco-Labs/go-evanesco/miner"
+	"github.com/Evanesco-Labs/go-evanesco/node"
 )
 
 const (

@@ -25,13 +25,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/mclock"
-	"github.com/ethereum/go-ethereum/event"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/metrics"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/p2p/enr"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/Evanesco-Labs/go-evanesco/common/mclock"
+	"github.com/Evanesco-Labs/go-evanesco/event"
+	"github.com/Evanesco-Labs/go-evanesco/log"
+	"github.com/Evanesco-Labs/go-evanesco/metrics"
+	"github.com/Evanesco-Labs/go-evanesco/p2p/enode"
+	"github.com/Evanesco-Labs/go-evanesco/p2p/enr"
+	"github.com/Evanesco-Labs/go-evanesco/rlp"
 )
 
 var (

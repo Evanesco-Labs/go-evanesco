@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/ethereum/go-ethereum/cmd/devp2p/internal/ethtest"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/internal/utesting"
-	"github.com/ethereum/go-ethereum/p2p"
-	"github.com/ethereum/go-ethereum/p2p/rlpx"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/Evanesco-Labs/go-evanesco/cmd/devp2p/internal/ethtest"
+	"github.com/Evanesco-Labs/go-evanesco/crypto"
+	"github.com/Evanesco-Labs/go-evanesco/internal/utesting"
+	"github.com/Evanesco-Labs/go-evanesco/p2p"
+	"github.com/Evanesco-Labs/go-evanesco/p2p/rlpx"
+	"github.com/Evanesco-Labs/go-evanesco/rlp"
 	"gopkg.in/urfave/cli.v1"
 )
 

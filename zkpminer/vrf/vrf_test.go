@@ -4,7 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"github.com/ethereum/go-ethereum/zkpminer/keypair"
+	"github.com/Evanesco-Labs/go-evanesco/zkpminer/keypair"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

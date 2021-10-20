@@ -24,17 +24,17 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/eth/downloader"
-	"github.com/ethereum/go-ethereum/eth/ethconfig"
-	"github.com/ethereum/go-ethereum/evaclient"
-	"github.com/ethereum/go-ethereum/ethstats"
-	"github.com/ethereum/go-ethereum/internal/debug"
-	"github.com/ethereum/go-ethereum/les"
-	"github.com/ethereum/go-ethereum/node"
-	"github.com/ethereum/go-ethereum/p2p"
-	"github.com/ethereum/go-ethereum/p2p/nat"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/Evanesco-Labs/go-evanesco/core"
+	"github.com/Evanesco-Labs/go-evanesco/eth/downloader"
+	"github.com/Evanesco-Labs/go-evanesco/eth/ethconfig"
+	"github.com/Evanesco-Labs/go-evanesco/evaclient"
+	"github.com/Evanesco-Labs/go-evanesco/ethstats"
+	"github.com/Evanesco-Labs/go-evanesco/internal/debug"
+	"github.com/Evanesco-Labs/go-evanesco/les"
+	"github.com/Evanesco-Labs/go-evanesco/node"
+	"github.com/Evanesco-Labs/go-evanesco/p2p"
+	"github.com/Evanesco-Labs/go-evanesco/p2p/nat"
+	"github.com/Evanesco-Labs/go-evanesco/params"
 )
 
 // NodeConfig represents the collection of configuration values to fine tune the Geth

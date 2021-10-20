@@ -23,11 +23,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/mclock"
-	"github.com/ethereum/go-ethereum/ethdb/memorydb"
-	"github.com/ethereum/go-ethereum/p2p/enode"
+	"github.com/Evanesco-Labs/go-evanesco/common/mclock"
+	"github.com/Evanesco-Labs/go-evanesco/ethdb/memorydb"
+	"github.com/Evanesco-Labs/go-evanesco/p2p/enode"
 
-	"github.com/ethereum/go-ethereum/les/utils"
+	"github.com/Evanesco-Labs/go-evanesco/les/utils"
 )
 
 const (

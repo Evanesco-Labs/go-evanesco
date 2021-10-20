@@ -19,19 +19,19 @@ package eth
 import (
 	"errors"
 	"fmt"
-	clique2 "github.com/ethereum/go-ethereum/consensus/clique"
-	"github.com/ethereum/go-ethereum/zkpminer"
+	clique2 "github.com/Evanesco-Labs/go-evanesco/consensus/clique"
+	"github.com/Evanesco-Labs/go-evanesco/zkpminer"
 	"math/big"
 	"sync/atomic"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/eth/protocols/eth"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/trie"
+	"github.com/Evanesco-Labs/go-evanesco/common"
+	"github.com/Evanesco-Labs/go-evanesco/core"
+	"github.com/Evanesco-Labs/go-evanesco/core/types"
+	"github.com/Evanesco-Labs/go-evanesco/eth/protocols/eth"
+	"github.com/Evanesco-Labs/go-evanesco/log"
+	"github.com/Evanesco-Labs/go-evanesco/p2p/enode"
+	"github.com/Evanesco-Labs/go-evanesco/trie"
 )
 
 // ethHandler implements the eth.Backend interface to handle the various network

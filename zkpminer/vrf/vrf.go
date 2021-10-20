@@ -7,7 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
-	"github.com/ethereum/go-ethereum/zkpminer/keypair"
+	"github.com/Evanesco-Labs/go-evanesco/zkpminer/keypair"
 	"math/big"
 )
 
