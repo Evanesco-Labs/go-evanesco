@@ -49,6 +49,7 @@ var (
 	NotEffectiveAddrError   = errors.New("miner address not staked or not in valid time period")
 	ZKPProofVerifyError     = errors.New("ZKP proof verify failed")
 	NotPledgeCoinbaseError  = errors.New("coinbase address conflict, check the coinbase address setting in Fortress")
+	StopMinerError          = errors.New("submit error connection closed stop mining")
 )
 
 // PublicEthereumAPI provides an API to access Ethereum full node-related
