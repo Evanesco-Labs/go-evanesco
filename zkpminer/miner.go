@@ -323,7 +323,10 @@ func (m *Miner) updateWS() {
 	m.scanner.explorer = &remoteExp
 
 	//set scanner status updating
-	atomic.StoreInt32(&m.scanner.running, int32(2))
+	atomic.StoreInt32(&m.scanner.updating, int32(1))
+	defer func() {
+		atomic.StoreInt32(&m.scanner.updating, int32(0))
+	}()
 
 	res := false
 	var err error
@@ -517,12 +520,23 @@ func (m *Miner) NewScanner(explorer Explorer) {
 		explorer:           explorer,
 		exitCh:             make(chan struct{}),
 		running:            int32(0),
+		updating:           int32(0),
 	}
 }
 
 func (m *Miner) StartScanner() {
-	m.scanner.close()
+	i := 0
+	for {
+		i++
+		if m.scanner.IsClosed() {
+			break
+		}
+		time.Sleep(time.Millisecond * 100)
+		m.scanner.close()
+		if i == 10 {
+			Fatalf("start carrier scanner failed")
+		}
+	}
 	m.scanner.exitCh = make(chan struct{})
 	go m.scanner.Loop()
-	atomic.StoreInt32(&m.scanner.running, int32(1))
 }

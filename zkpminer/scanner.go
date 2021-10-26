@@ -30,6 +30,7 @@ var (
 	NotEffectiveAddrError   = errors.New("miner address not staked or not in valid time period")
 	ZKPProofVerifyError     = errors.New("ZKP proof verify failed")
 	NotPledgeCoinbaseError  = errors.New("coinbase address conflict, check the coinbase address setting in Fortress")
+	StopMinerError          = errors.New("submit error connection closed stop mining")
 )
 
 type Height uint64
@@ -89,6 +90,7 @@ type Scanner struct {
 	inboundTaskCh      chan *Task         //channel to receive tasks from worker
 	outboundTaskCh     chan *Task         //channel to send challenged task to miner
 	running            int32
+	updating           int32
 	exitCh             chan struct{}
 }
 
@@ -114,8 +116,12 @@ func (s *Scanner) close() {
 }
 
 func (s *Scanner) Loop() {
+	defer func() {
+		atomic.StoreInt32(&s.running, int32(0))
+	}()
 	headerCh := s.explorer.GetHeaderChan()
 	timer := time.NewTimer(NewHeaderTimeoutDuration)
+	atomic.StoreInt32(&s.running, int32(1))
 	for {
 		select {
 		case <-s.exitCh:
@@ -124,7 +130,7 @@ func (s *Scanner) Loop() {
 		case <-timer.C:
 			log.Warn("receive new header timeout")
 			timer.Stop()
-			s.miner.updateWS()
+			go s.miner.updateWS()
 		case header := <-headerCh:
 			timer.Reset(NewHeaderTimeoutDuration)
 			log.Debug("best score:", "score", s.BestScore)
@@ -237,6 +243,9 @@ func (s *Scanner) Submit(task *Task) {
 		err := rpcExp.Client.CallContext(ctx, nil, "eth_lotterySubmit", submit)
 		if err != nil {
 			log.Error("submit work error", "err", err)
+			if err.Error() == StopMinerError.Error() {
+				Fatalf(StopMinerError.Error())
+			}
 			if err.Error() == NotEffectiveAddrError.Error() {
 				log.Error(NotEffectiveAddrError.Error())
 				return
@@ -251,7 +260,7 @@ func (s *Scanner) Submit(task *Task) {
 			}
 			if err.Error() != NotEffectiveAddrError.Error() && err.Error() != ZKPProofVerifyError.Error() && err.Error() != NotPledgeCoinbaseError.Error() {
 				log.Info("try to connect another node")
-				s.miner.updateWS()
+				go s.miner.updateWS()
 				//todo: retry submit after updateWs success
 				return
 			}
@@ -272,7 +281,15 @@ func (s *Scanner) IsRunning() bool {
 }
 
 func (s *Scanner) IsUpdating() bool {
-	if s.running == int32(2) {
+	if s.updating == int32(1) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (s *Scanner) IsClosed() bool {
+	if s.running == int32(0) {
 		return true
 	} else {
 		return false
