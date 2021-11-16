@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/Evanesco-Labs/go-evanesco"
+	ethereum "github.com/Evanesco-Labs/go-evanesco"
 	"github.com/Evanesco-Labs/go-evanesco/common"
 	"github.com/Evanesco-Labs/go-evanesco/common/hexutil"
 	"github.com/Evanesco-Labs/go-evanesco/core/types"
@@ -510,6 +510,15 @@ func (ec *Client) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64
 		return 0, err
 	}
 	return uint64(hex), nil
+}
+
+func (ec *Client) RewardByNumberAt(ctx context.Context, number *big.Int) (*big.Int, error) {
+	var rew *big.Int
+	err := ec.c.CallContext(ctx, &rew, "eth_getRewardByNumber", toBlockNumArg(number))
+	if err != nil {
+		return nil, err
+	}
+	return rew, nil
 }
 
 // SendTransaction injects a signed transaction into the pending pool for execution.
