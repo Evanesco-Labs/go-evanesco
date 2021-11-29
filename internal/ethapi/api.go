@@ -608,6 +608,11 @@ func (s *PublicBlockChainAPI) GetBalance(ctx context.Context, address common.Add
 	return (*hexutil.Big)(state.GetBalance(address)), state.Error()
 }
 
+func (s *PublicBlockChainAPI) GetRewardByNumber(ctx context.Context, number *big.Int) (*big.Int) {
+	minerReward, _ := clique.CurrentReward(number)
+	return minerReward
+}
+
 // Result structs for GetProof
 type AccountResult struct {
 	Address      common.Address  `json:"address"`
