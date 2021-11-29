@@ -56,8 +56,8 @@ const (
 	TeamRewardIncreaseHeight    = MainNetRewardIncreaseHeight + uint64(26280000)
 	RewardHalvingInterval       = uint64(18000000)//the period of halving
 
-	beforeRewardRate = uint64(1522)
-	afterRewardRate = uint64(3044)
+	beforeRewardRate = uint64(152207)
+	afterRewardRate = uint64(304414)
 
 )
 
@@ -877,17 +877,13 @@ func CurrentReward(blockHeight *big.Int) (*big.Int,*big.Int)  {
 		rate = big.NewInt(0)
 	)
 	if blockHeight.Uint64() < AvsRewardIncreaseHeight {
-
 		minerReward.Set(PreGpowBlockReward)
 	} else if AvsRewardIncreaseHeight <= blockHeight.Uint64() && blockHeight.Uint64() <MainNetRewardIncreaseHeight {
-
 		minerReward.Set(GpowBlockReward)
 	}else {
 		totalReward.Set(AccumulateCurrentRewards(blockHeight))
-
 		//five years
 		if blockHeight.Uint64() < TeamRewardIncreaseHeight {
-
 			if blockHeight.Uint64() < MainNetRewardIncreaseHeight + RewardHalvingInterval {
 				rate.SetUint64(beforeRewardRate)
 			}else{
