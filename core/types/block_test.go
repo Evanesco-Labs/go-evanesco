@@ -18,6 +18,7 @@ package types
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/assert"
 	"hash"
 	"math/big"
 	"reflect"
@@ -280,4 +281,13 @@ func makeBenchBlock() *Block {
 		}
 	}
 	return NewBlock(header, txs, uncles, receipts, newHasher())
+}
+
+func TestHeader_Short(t *testing.T) {
+	header := makeBenchBlock().header
+	header.BestLottery.MinerAddr = common.HexToAddress("0x01e029103c0A3219652e7BC6616a657de86C598E")
+	short := header.Short()
+	assert.Equal(t, short.Hash(), header.Hash())
+	assert.Equal(t, 0, short.Number().Cmp(header.Number))
+	assert.Equal(t, header.BestLottery.MinerAddr, short.BestMinerAddress())
 }

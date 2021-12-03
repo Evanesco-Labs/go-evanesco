@@ -108,7 +108,8 @@ func (w *Worker) HandleStartTask(task *Task) error {
 	// request if this block already exit
 	header, err := w.scanner.GetHeader(w.scanner.LastCoinbaseHeight + task.challengeIndex)
 	if header != nil && err == nil {
-		return w.HandleTaskAfterChallenge(header, task)
+		short := header.Short()
+		return w.HandleTaskAfterChallenge(&short, task)
 	}
 
 	// waiting for challenge block exist
@@ -129,7 +130,7 @@ func (w *Worker) HandleChallengedTask(task *Task) error {
 	return nil
 }
 
-func (w *Worker) HandleTaskAfterChallenge(header *types.Header, task *Task) error {
+func (w *Worker) HandleTaskAfterChallenge(header *types.HeaderShort, task *Task) error {
 	log.Debug("handler task after challenge")
 	task.SetHeader(header)
 	return w.HandleChallengedTask(task)

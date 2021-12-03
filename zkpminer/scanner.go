@@ -36,19 +36,19 @@ var (
 type Height uint64
 
 type Explorer interface {
-	GetHeaderChan() chan *types.Header
+	GetHeaderChan() chan *types.HeaderShort
 	GetHeaderByNum(num uint64) *types.Header
 }
 
 type RpcExplorer struct {
 	Client     *rpc.Client
 	Sub        ethereum.Subscription
-	HeaderCh   chan *types.Header
+	HeaderCh   chan *types.HeaderShort
 	rpcTimeOut time.Duration
 	WsUrl      string
 }
 
-func (r *RpcExplorer) GetHeaderChan() chan *types.Header {
+func (r *RpcExplorer) GetHeaderChan() chan *types.HeaderShort {
 	return r.HeaderCh
 }
 
@@ -66,10 +66,10 @@ func (r *RpcExplorer) GetHeaderByNum(num uint64) *types.Header {
 
 type LocalExplorer struct {
 	Backend
-	headerCh chan *types.Header
+	headerCh chan *types.HeaderShort
 }
 
-func (l *LocalExplorer) GetHeaderChan() chan *types.Header {
+func (l *LocalExplorer) GetHeaderChan() chan *types.HeaderShort {
 	return l.headerCh
 }
 
@@ -94,7 +94,7 @@ type Scanner struct {
 	exitCh             chan struct{}
 }
 
-func (s *Scanner) NewTask(h *types.Header) Task {
+func (s *Scanner) NewTask(h *types.HeaderShort) Task {
 	return Task{
 		Step:             TASKSTART,
 		CoinbaseAddr:     s.CoinbaseAddr,
@@ -134,15 +134,15 @@ func (s *Scanner) Loop() {
 		case header := <-headerCh:
 			timer.Reset(NewHeaderTimeoutDuration)
 			log.Debug("best score:", "score", s.BestScore)
-			height := Height(header.Number.Uint64())
+			height := Height(header.Number().Uint64())
 			//index := height - s.LastCoinbaseHeight
-			index := Height(new(big.Int).Mod(header.Number, new(big.Int).SetUint64(uint64(s.CoinbaseInterval))).Uint64())
+			index := Height(new(big.Int).Mod(header.Number(), new(big.Int).SetUint64(uint64(s.CoinbaseInterval))).Uint64())
 			log.Debug("chain status", "height", height, "index", index)
 
 			s.LastBlockHeight = height
 			if s.IfCoinBase(header) {
-				if _, ok := s.miner.Workers[header.BestLottery.MinerAddr]; ok {
-					log.Info("Congratulations you got the best score!", "height", header.Number.Uint64())
+				if _, ok := s.miner.Workers[header.BestMinerAddress()]; ok {
+					log.Info("Congratulations you got the best score!", "height", header.Number().Uint64())
 				}
 
 				log.Info("start new mining epoch")
@@ -197,8 +197,8 @@ func (s *Scanner) Loop() {
 	}
 }
 
-func (s *Scanner) IfCoinBase(h *types.Header) bool {
-	return new(big.Int).Mod(h.Number, new(big.Int).SetUint64(uint64(s.CoinbaseInterval))).Cmp(zero) == 0
+func (s *Scanner) IfCoinBase(h *types.HeaderShort) bool {
+	return new(big.Int).Mod(h.Number(), new(big.Int).SetUint64(uint64(s.CoinbaseInterval))).Cmp(zero) == 0
 }
 
 //todo: improve robustness, add some retries

@@ -144,6 +144,31 @@ func (h *Header) EmptyReceipts() bool {
 	return h.ReceiptHash == EmptyRootHash
 }
 
+type HeaderShort [60]byte
+
+func (h *Header) Short() HeaderShort {
+	var short HeaderShort
+	binary.LittleEndian.PutUint64(short[:], h.Number.Uint64())
+	hash := h.Hash()
+	copy(short[8:], hash[:])
+	copy(short[40:], h.BestLottery.MinerAddr[:])
+	return short
+}
+
+func (h *HeaderShort) Hash() common.Hash {
+	var hash common.Hash
+	copy(hash[:], h[8:])
+	return hash
+}
+
+func (h *HeaderShort) Number() *big.Int {
+	return new(big.Int).SetUint64(binary.LittleEndian.Uint64(h[:8]))
+}
+
+func (h *HeaderShort) BestMinerAddress() common.Address {
+	return common.BytesToAddress(h[40:])
+}
+
 // Body is a simple (mutable, non-safe) data container for storing and moving
 // a block's data contents (transactions and uncles) together.
 type Body struct {
