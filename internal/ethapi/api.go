@@ -24,7 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/Evanesco-Labs/go-evanesco/accounts"
 	"github.com/Evanesco-Labs/go-evanesco/accounts/abi"
 	"github.com/Evanesco-Labs/go-evanesco/accounts/keystore"
@@ -45,6 +44,7 @@ import (
 	"github.com/Evanesco-Labs/go-evanesco/params"
 	"github.com/Evanesco-Labs/go-evanesco/rlp"
 	"github.com/Evanesco-Labs/go-evanesco/rpc"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/tyler-smith/go-bip39"
 )
 
@@ -606,11 +606,6 @@ func (s *PublicBlockChainAPI) GetBalance(ctx context.Context, address common.Add
 		return nil, err
 	}
 	return (*hexutil.Big)(state.GetBalance(address)), state.Error()
-}
-
-func (s *PublicBlockChainAPI) GetRewardByNumber(ctx context.Context, number *big.Int) (*big.Int) {
-	minerReward, _ := clique.CurrentReward(number)
-	return minerReward
 }
 
 // Result structs for GetProof
