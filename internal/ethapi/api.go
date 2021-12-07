@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/Evanesco-Labs/go-evanesco/accounts"
 	"github.com/Evanesco-Labs/go-evanesco/accounts/abi"
 	"github.com/Evanesco-Labs/go-evanesco/accounts/keystore"
@@ -44,7 +45,6 @@ import (
 	"github.com/Evanesco-Labs/go-evanesco/params"
 	"github.com/Evanesco-Labs/go-evanesco/rlp"
 	"github.com/Evanesco-Labs/go-evanesco/rpc"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/tyler-smith/go-bip39"
 )
 
