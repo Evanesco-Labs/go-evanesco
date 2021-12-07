@@ -85,7 +85,10 @@ var (
 	diffInTurn = big.NewInt(2) // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 
+	//The current address is a virtual address and will be changed before Eva is set to launch Mainnet.
 	teamAddress = common.HexToAddress("0x8605cdbbdb6d264aa742e77020dcbc58fcdce182")
+	ecoAddress = common.HexToAddress("0x8605cdbbdb6d264aa742e77020dcbc58fcdce182")
+	validatorAddress = common.HexToAddress("0x8605cdbbdb6d264aa742e77020dcbc58fcdce182")
 )
 
 // Various error messages to mark blocks invalid. These should be private to
@@ -668,9 +671,11 @@ func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Heade
 	if header.IsZKPRewardBlock() {
 		c.ResetBestLotteryandScore(header.Number.Uint64())
 		if header.BestLottery.CoinbaseAddr != empty {
-			minerReward,teamReward := CurrentReward(header.Number)
+			minerReward,teamReward,ecoReward,validatorReward := CurrentReward(header.Number)
 			state.AddBalance(header.BestLottery.CoinbaseAddr,minerReward)
 			state.AddBalance(teamAddress,teamReward)
+			state.AddBalance(ecoAddress,ecoReward)
+			state.AddBalance(validatorAddress,validatorReward)
 		}
 	}
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
@@ -869,13 +874,14 @@ func AccumulateCurrentRewards(blockHeight *big.Int) *big.Int {
 	return reward
 }
 
-func CurrentReward(blockHeight *big.Int) (*big.Int,*big.Int)  {
+func CurrentReward(blockHeight *big.Int) (*big.Int,*big.Int,*big.Int,*big.Int)  {
 	var(
 		minerReward = big.NewInt(0)
 		teamReward = big.NewInt(0)
+		ecoReward = big.NewInt(0)
+		validatorReward = big.NewInt(0)
 		organization = big.NewInt(0)
 		totalReward = big.NewInt(0)
-		rate = big.NewInt(0)
 	)
 	if blockHeight.Uint64() < AvsRewardIncreaseHeight {
 
@@ -885,9 +891,14 @@ func CurrentReward(blockHeight *big.Int) (*big.Int,*big.Int)  {
 		minerReward.Set(GpowBlockReward)
 	}else {
 		totalReward.Set(AccumulateCurrentRewards(blockHeight))
+		rate := big.NewInt(0)
 		organization.Mul(totalReward,big.NewInt(10))
 		organization.Div(organization,big.NewInt(100))
-		fmt.Println("organization是:",organization)
+		ecoReward.Mul(totalReward,big.NewInt(3))
+		ecoReward.Div(ecoReward,big.NewInt(100))
+		validatorReward.Mul(totalReward,big.NewInt(7))
+		validatorReward.Div(validatorReward,big.NewInt(100))
+		totalReward.Sub(totalReward,organization)
 		//five years
 		if blockHeight.Uint64() < TeamRewardIncreaseHeight {
 
@@ -897,16 +908,15 @@ func CurrentReward(blockHeight *big.Int) (*big.Int,*big.Int)  {
 				//halving
 				rate.SetUint64(afterRewardRate)
 			}
-			totalReward.Sub(totalReward,organization)
 			teamReward.Mul(totalReward,rate)
 			teamReward.Div(teamReward,new(big.Int).SetInt64(10000))
 			minerReward.Sub(totalReward,teamReward)
-			return minerReward,teamReward
+			return minerReward,teamReward,ecoReward,validatorReward
 		}
 		//over five years
 		minerReward.Set(totalReward)
 	}
-	return minerReward,teamReward
+	return minerReward,teamReward,ecoReward,validatorReward
 }
 
 
