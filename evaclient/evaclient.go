@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"math/big"
 
-	ethereum "github.com/Evanesco-Labs/go-evanesco"
+	"github.com/Evanesco-Labs/go-evanesco"
 	"github.com/Evanesco-Labs/go-evanesco/common"
 	"github.com/Evanesco-Labs/go-evanesco/common/hexutil"
 	"github.com/Evanesco-Labs/go-evanesco/core/types"
@@ -511,7 +511,6 @@ func (ec *Client) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64
 	}
 	return uint64(hex), nil
 }
-
 
 // SendTransaction injects a signed transaction into the pending pool for execution.
 //
