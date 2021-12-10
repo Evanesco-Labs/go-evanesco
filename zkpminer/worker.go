@@ -106,10 +106,8 @@ func (w *Worker) HandleStartTask(task *Task) error {
 	log.Info("vrf finished", "challenge height:", w.scanner.LastCoinbaseHeight+task.challengeIndex, "index:", task.challengeIndex)
 	log.Info("waiting for challenge block", "time duration (second)", task.challengeIndex*6)
 	// request if this block already exit
-	header, err := w.scanner.GetHeader(w.scanner.LastCoinbaseHeight + task.challengeIndex)
-	if header != nil && err == nil {
-		short := header.Short()
-		return w.HandleTaskAfterChallenge(&short, task)
+	if task.challengeIndex == Height(0) {
+		return w.HandleTaskAfterChallenge(w.scanner.LastCoinbaseHeaderShort, task)
 	}
 
 	// waiting for challenge block exist
@@ -130,7 +128,7 @@ func (w *Worker) HandleChallengedTask(task *Task) error {
 	return nil
 }
 
-func (w *Worker) HandleTaskAfterChallenge(header *types.HeaderShort, task *Task) error {
+func (w *Worker) HandleTaskAfterChallenge(header types.HeaderShort, task *Task) error {
 	log.Debug("handler task after challenge")
 	task.SetHeader(header)
 	return w.HandleChallengedTask(task)

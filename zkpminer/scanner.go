@@ -36,19 +36,19 @@ var (
 type Height uint64
 
 type Explorer interface {
-	GetHeaderChan() chan *types.HeaderShort
+	GetHeaderChan() chan types.HeaderShort
 	GetHeaderByNum(num uint64) *types.Header
 }
 
 type RpcExplorer struct {
 	Client     *rpc.Client
 	Sub        ethereum.Subscription
-	HeaderCh   chan *types.HeaderShort
+	HeaderCh   chan types.HeaderShort
 	rpcTimeOut time.Duration
 	WsUrl      string
 }
 
-func (r *RpcExplorer) GetHeaderChan() chan *types.HeaderShort {
+func (r *RpcExplorer) GetHeaderChan() chan types.HeaderShort {
 	return r.HeaderCh
 }
 
@@ -66,10 +66,10 @@ func (r *RpcExplorer) GetHeaderByNum(num uint64) *types.Header {
 
 type LocalExplorer struct {
 	Backend
-	headerCh chan *types.HeaderShort
+	headerCh chan types.HeaderShort
 }
 
-func (l *LocalExplorer) GetHeaderChan() chan *types.HeaderShort {
+func (l *LocalExplorer) GetHeaderChan() chan types.HeaderShort {
 	return l.headerCh
 }
 
@@ -78,23 +78,24 @@ func (l *LocalExplorer) GetHeaderByNum(num uint64) *types.Header {
 }
 
 type Scanner struct {
-	mu                 sync.RWMutex
-	miner              *Miner
-	CoinbaseAddr       common.Address
-	BestScore          *big.Int
-	LastBlockHeight    Height
-	CoinbaseInterval   Height
-	LastCoinbaseHeight Height
-	explorer           Explorer
-	taskWait           map[Height][]*Task //single concurrent
-	inboundTaskCh      chan *Task         //channel to receive tasks from worker
-	outboundTaskCh     chan *Task         //channel to send challenged task to miner
-	running            int32
-	updating           int32
-	exitCh             chan struct{}
+	mu                      sync.RWMutex
+	miner                   *Miner
+	CoinbaseAddr            common.Address
+	BestScore               *big.Int
+	LastBlockHeight         Height
+	CoinbaseInterval        Height
+	LastCoinbaseHeight      Height
+	LastCoinbaseHeaderShort types.HeaderShort
+	explorer                Explorer
+	taskWait                map[Height][]*Task //single concurrent
+	inboundTaskCh           chan *Task         //channel to receive tasks from worker
+	outboundTaskCh          chan *Task         //channel to send challenged task to miner
+	running                 int32
+	updating                int32
+	exitCh                  chan struct{}
 }
 
-func (s *Scanner) NewTask(h *types.HeaderShort) Task {
+func (s *Scanner) NewTask(h types.HeaderShort) Task {
 	return Task{
 		Step:             TASKSTART,
 		CoinbaseAddr:     s.CoinbaseAddr,
@@ -149,6 +150,7 @@ func (s *Scanner) Loop() {
 				task := s.NewTask(header)
 				s.outboundTaskCh <- &task
 				s.LastCoinbaseHeight = height
+				s.LastCoinbaseHeaderShort = header
 				s.CleanStatus()
 			}
 
@@ -197,7 +199,7 @@ func (s *Scanner) Loop() {
 	}
 }
 
-func (s *Scanner) IfCoinBase(h *types.HeaderShort) bool {
+func (s *Scanner) IfCoinBase(h types.HeaderShort) bool {
 	return new(big.Int).Mod(h.Number(), new(big.Int).SetUint64(uint64(s.CoinbaseInterval))).Cmp(zero) == 0
 }
 
