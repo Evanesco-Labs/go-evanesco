@@ -57,13 +57,13 @@ type Task struct {
 	minerAddr        common.Address
 	Step             TaskStep
 	lastCoinBaseHash [32]byte
-	challengeHeader  *types.HeaderShort
+	challengeHeader  types.HeaderShort
 	challengeIndex   Height
 	lottery          *types.Lottery
 	signature        [65]byte
 }
 
-func (t *Task) SetHeader(h *types.HeaderShort) {
+func (t *Task) SetHeader(h types.HeaderShort) {
 	t.challengeHeader = h
 	t.lottery.ChallengeHeaderHash = h.Hash()
 	t.Step = TASKGETCHALLENGEBLOCK
@@ -210,7 +210,7 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 
 	explorer := LocalExplorer{
 		Backend:  backend,
-		headerCh: make(chan *types.HeaderShort),
+		headerCh: make(chan types.HeaderShort),
 	}
 	blockEventCh := make(chan core.ChainHeadEvent)
 	sub := backend.BlockChain().SubscribeChainHeadEvent(blockEventCh)
@@ -219,7 +219,7 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 			select {
 			case blockEvent := <-blockEventCh:
 				short := blockEvent.Block.Header().Short()
-				explorer.headerCh <- &short
+				explorer.headerCh <- short
 			case <-sub.Err():
 				log.Error(ErrorBlockHeaderSubscribe.Error())
 				miner.Close()
@@ -268,7 +268,7 @@ func NewMiner(config Config) (*Miner, error) {
 	explorer := RpcExplorer{
 		Client:     new(rpc.Client),
 		Sub:        new(rpc.ClientSubscription),
-		HeaderCh:   make(chan *types.HeaderShort),
+		HeaderCh:   make(chan types.HeaderShort),
 		rpcTimeOut: config.RpcTimeout,
 		WsUrl:      "",
 	}
@@ -317,7 +317,7 @@ func (m *Miner) updateWS() {
 	remoteExp := RpcExplorer{
 		Client:     new(rpc.Client),
 		Sub:        new(rpc.ClientSubscription),
-		HeaderCh:   make(chan *types.HeaderShort),
+		HeaderCh:   make(chan types.HeaderShort),
 		rpcTimeOut: RPCTIMEOUT,
 		WsUrl:      oldURL,
 	}
