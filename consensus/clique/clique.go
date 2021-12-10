@@ -50,8 +50,15 @@ const (
 	inmemorySnapshots  = 128  // Number of recent vote snapshots to keep in memory
 	inmemorySignatures = 4096 // Number of recent block signatures to keep in memory
 
-	wiggleTime              = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
-	AvsRewardIncreaseHeight = uint64(284500)
+	wiggleTime                  = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
+	AvsRewardIncreaseHeight     = uint64(284500)
+	MainNetRewardIncreaseHeight = uint64(2845000)
+	TeamRewardIncreaseHeight    = MainNetRewardIncreaseHeight + uint64(26280000)
+	RewardHalvingInterval       = uint64(18000000)//the period of halving
+
+	beforeRewardRate = uint64(1692)
+	afterRewardRate = uint64(3381)
+
 )
 
 // Clique proof-of-authority protocol constants.
@@ -69,8 +76,19 @@ var (
 	GpowBlockReward    = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(1000)))
 	PreGpowBlockReward = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(500)))
 
+	// Block reward in wei for successfully mining a block upward from MainNet
+	MainNetBlockReward   = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(2000)))
+	TeamBlockReward      = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(2000)))
+	minerBlockReward     = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(int64(2000)))
+
+
 	diffInTurn = big.NewInt(2) // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
+
+	//The current address is a virtual address and will be changed before Eva is set to launch Mainnet.
+	teamAddress = common.HexToAddress("0x8605cdbbdb6d264aa742e77020dcbc58fcdce182")
+	ecoAddress = common.HexToAddress("0x8605cdbbdb6d264aa742e77020dcbc58fcdce182")
+	validatorAddress = common.HexToAddress("0x8605cdbbdb6d264aa742e77020dcbc58fcdce182")
 )
 
 // Various error messages to mark blocks invalid. These should be private to
@@ -649,14 +667,15 @@ func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Heade
 	// Accumulate any block and uncle rewards and commit the final state root
 	log.Debug("finalized block", "number", header.Number)
 	empty := common.Address{}
+
 	if header.IsZKPRewardBlock() {
 		c.ResetBestLotteryandScore(header.Number.Uint64())
 		if header.BestLottery.CoinbaseAddr != empty {
-			if header.Number.Uint64() < AvsRewardIncreaseHeight {
-				state.AddBalance(header.BestLottery.CoinbaseAddr, PreGpowBlockReward)
-			} else {
-				state.AddBalance(header.BestLottery.CoinbaseAddr, GpowBlockReward)
-			}
+			minerReward,teamReward,ecoReward,validatorReward := CurrentReward(header.Number)
+			state.AddBalance(header.BestLottery.CoinbaseAddr,minerReward)
+			state.AddBalance(teamAddress,teamReward)
+			state.AddBalance(ecoAddress,ecoReward)
+			state.AddBalance(validatorAddress,validatorReward)
 		}
 	}
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
@@ -843,3 +862,61 @@ func encodeSigHeaderWithReward(w io.Writer, header *types.Header) {
 		panic("can't encode: " + err.Error())
 	}
 }
+//AccumulateCurrentRewards returns the total number of current rewards
+func AccumulateCurrentRewards(blockHeight *big.Int) *big.Int {
+	currenBlocktHeight := big.NewInt(0)
+	reward := big.NewInt(0)
+	currenBlocktHeight.Set(blockHeight)
+	currenBlocktHeight.Sub(currenBlocktHeight, new(big.Int).SetUint64(MainNetRewardIncreaseHeight))
+	halvings := new(big.Int).Div(currenBlocktHeight, new(big.Int).SetUint64(RewardHalvingInterval)).Int64()
+	time := int64(1) << halvings
+	reward.Div(MainNetBlockReward,big.NewInt(time))
+	return reward
+}
+
+func CurrentReward(blockHeight *big.Int) (*big.Int,*big.Int,*big.Int,*big.Int)  {
+	var(
+		minerReward = big.NewInt(0)
+		teamReward = big.NewInt(0)
+		ecoReward = big.NewInt(0)
+		validatorReward = big.NewInt(0)
+		organization = big.NewInt(0)
+		totalReward = big.NewInt(0)
+	)
+	if blockHeight.Uint64() < AvsRewardIncreaseHeight {
+
+		minerReward.Set(PreGpowBlockReward)
+	} else if AvsRewardIncreaseHeight <= blockHeight.Uint64() && blockHeight.Uint64() <MainNetRewardIncreaseHeight {
+
+		minerReward.Set(GpowBlockReward)
+	}else {
+		totalReward.Set(AccumulateCurrentRewards(blockHeight))
+		rate := big.NewInt(0)
+		organization.Mul(totalReward,big.NewInt(10))
+		organization.Div(organization,big.NewInt(100))
+		ecoReward.Mul(totalReward,big.NewInt(3))
+		ecoReward.Div(ecoReward,big.NewInt(100))
+		validatorReward.Mul(totalReward,big.NewInt(7))
+		validatorReward.Div(validatorReward,big.NewInt(100))
+		totalReward.Sub(totalReward,organization)
+		//five years
+		if blockHeight.Uint64() < TeamRewardIncreaseHeight {
+
+			if blockHeight.Uint64() < MainNetRewardIncreaseHeight + RewardHalvingInterval {
+				rate.SetUint64(beforeRewardRate)
+			}else{
+				//halving
+				rate.SetUint64(afterRewardRate)
+			}
+			teamReward.Mul(totalReward,rate)
+			teamReward.Div(teamReward,new(big.Int).SetInt64(10000))
+			minerReward.Sub(totalReward,teamReward)
+			return minerReward,teamReward,ecoReward,validatorReward
+		}
+		//over five years
+		minerReward.Set(totalReward)
+	}
+	return minerReward,teamReward,ecoReward,validatorReward
+}
+
+
