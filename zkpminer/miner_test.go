@@ -31,7 +31,7 @@ func DefaultTestConfig() Config {
 		CoinbaseAddr:     common.Address{},
 		WsUrl:            []string{},
 		RpcTimeout:       RPCTIMEOUT,
-		PkPath:           "./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx",
+		PkPath:           "./QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9",
 	}
 }
 

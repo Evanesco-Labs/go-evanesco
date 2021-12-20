@@ -1493,7 +1493,7 @@ func setZKPMiner(ctx *cli.Context, cfg *zkpminer.Config) {
 		coinbaseAddr = common.HexToAddress(ctx.GlobalString(ZKPMinerCoinbaseAddress.Name))
 	}
 
-	pkPath := "./QmNpJg4jDFE4LMNvZUzysZ2Ghvo4UJFcsjguYcx4dTfwKx"
+	pkPath := "./QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9"
 	if ctx.GlobalIsSet(ZKPMinerPkPath.Name) {
 		pkPath = ctx.GlobalString(ZKPMinerPkPath.Name)
 	}
