@@ -52,7 +52,7 @@ const (
 
 	wiggleTime                  = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 	AvsRewardIncreaseHeight     = uint64(284500)
-	MainNetRewardIncreaseHeight = uint64(2845000)
+	MainNetRewardIncreaseHeight = uint64(1539700)
 	TeamRewardIncreaseHeight    = MainNetRewardIncreaseHeight + uint64(26280000)
 	RewardHalvingInterval       = uint64(18000000)//the period of halving
 
@@ -86,9 +86,9 @@ var (
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 
 	//The current address is a virtual address and will be changed before Eva is set to launch Mainnet.
-	teamAddress = common.HexToAddress("0x8605cdbbdb6d264aa742e77020dcbc58fcdce182")
-	ecoAddress = common.HexToAddress("0x8605cdbbdb6d264aa742e77020dcbc58fcdce182")
-	validatorAddress = common.HexToAddress("0x8605cdbbdb6d264aa742e77020dcbc58fcdce182")
+	teamAddress = common.HexToAddress("0xd7789c587c67d2d8eEa50B760c5926bA2932d00f")
+	ecoAddress = common.HexToAddress("0x46e89D9CF32c19329c2aBE4B8e6274A1fBFD525e")
+	validatorAddress = common.HexToAddress("0xe8f344b8cc2b57C621A8011FeC4A51D83D191adb")
 )
 
 // Various error messages to mark blocks invalid. These should be private to
