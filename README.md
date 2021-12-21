@@ -39,7 +39,7 @@ a.In the case of transaction data, the block-generating person is obtained accor
 b.In the case of a PoW block, the most suitable block is determined according to the content of the block broadcast by the block-generating person and the finality is determined (10 minutes)
 
 
-Now we are at the stage of **α-testnet**, Evanesco α Chain introduces a system of 7 validators with POA consensus that can support Privacy Account and EVM-compatible privacy-middleware. It is very easy to test the functionality of Evanesco.
+Evanesco α Chain introduces a system of 7 validators with POA consensus that can support Privacy Account and EVM-compatible privacy-middleware.
 
 
 ## Native Token
@@ -79,24 +79,24 @@ on how you can run your own `eva` instance.
 
 The hardware must meet certain requirements to run a full node.
 - PC or VPS running recent versions of Mac OS X or Linux.
-- 100G of SSD storage for Avis testnet and another 10G if you start miner on full node.
-- 2 gigabytes of memory (RAM) for Avis testnet and another 4 gigabytes of memory (RAM) if you start miner on full node.
+- 100G of SSD storage for EVA mainnet and another 10G if you start miner on full node.
+- 2 gigabytes of memory (RAM) for EVA mainnet and another 4 gigabytes of memory (RAM) if you start miner on full node.
 - A broadband Internet connection with upload/download speeds of at least 10 megabyte per second
 
-### Run Full node to Join Avis TestNet
+### Run Full node to Join EVA MainNet
 
 #### 1. Preparation
 First, go to the source code directory `go-evaneso` and follow the instruction above to build `eva`.
-Then, make a new directory. Here we name this new directory `avisnode`.
+Then, make a new directory. Here we name this new directory `evanode`.
 ```shell
-mkdir avisnode
+mkdir evanode
 ```
-Copy these 4 files into `avisnode` with this command: 
+Copy these 4 files into `evanode` with this command: 
 ```shell
-cp ./build/bin/eva ./avisnode
-cp ./verifykey.txt ./avisnode
-cp ./avis.json ./avisnode
-cp ./avis.toml ./avisnode
+cp ./build/bin/eva ./evanode
+cp ./verifykey.txt ./evanode
+cp ./eva.json ./evanode
+cp ./eva.toml ./evanode
 ```
 Make a new directory to store blockchain data with this command:
 ```shell
@@ -112,16 +112,16 @@ Generate a new account with this command, and remember the password you entered 
 #### 3. Init Genesis Block
 Init genesis block with this command:
 ```shell
-./eva --datadir data init ./avis.json
+./eva --datadir data init ./eva.json
 ```
 
 #### 4. Start Full Node 
 Start up full node with this command:
 ```shell
-./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./avis.toml
+./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./eva.toml
 ```
 
-This will connect your node to the Avis TestNet, logs like the following will be printed:
+This will connect your node to the EVA network, logs like the following will be printed:
 ```shell
 INFO [08-25|20:25:23.922] Block synchronisation started 
 INFO [08-25|20:25:24.861] Downloader queue stats                   receiptTasks=0 blockTasks=0 itemSize=592.71B throttle=8192
@@ -149,9 +149,9 @@ Before starting to mine, you also need to download a ZKP prove key file `QmQL4k1
 
 [IPFS Download Link](https://ipfs.io/ipfs/QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9)
 
-Copy this file to the `avisnode` directory, and start full node and miner with this command:
+Copy this file to the `evanode` directory, and start full node and miner with this command:
 ```shell
-./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9 --zkpvkpath ./verifykey.txt --config ./avis.toml
+./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9 --zkpvkpath ./verifykey.txt --config ./eva.toml
 ```
 
 This command will start miner with the account you just created and send reward to this address if your mining work has the best score.
@@ -161,37 +161,37 @@ Set flag `--zkpkeypath` the path of your keyfile, if you want to derive miner ad
 Set flag `--zkpcoinbase` the coinbase address, if you want to receive mining rewards to this address.  
 
 ### Update and Restart
-During the testing phase, we may update our code and restart the Avis network.
+We may update our code and restart the EVA network.
 Follow the steps below to restart the full node.
 
 #### 1. Rebuild
 Download the latest code from [go-evanesco](https://github.com/Evanesco-Labs/go-evanesco) in branch main. Build the latest code and get the new executable file `eva`.
 
 #### 2. Clear and Replace
-Go to the directory of your previous full node. If you follow the guide above to run full node before, this directory should be named `avisnode`.
+Go to the directory of your previous full node. If you follow the guide above to run full node before, this directory should be named `evanode`.
 
 Remove the old executable file `eva` and copy the new `eva` into it.
 
-Remove the config file `avis.toml` and copy the new `avis.toml` from the new source code directory into `avisnode`.
+Remove the config file `eva.toml` and copy the new `eva.toml` from the new source code directory into `evanode`.
 
-Remove the directory `avisnode/data/eva`. 
-**Notice that do not remove the `avisnode/data/keystore` directory!**
+Remove the directory `evanode/data/eva`. 
+**Notice that do not remove the `evanode/data/keystore` directory!**
 
 #### 3. Re-init Genesis Block
 Init genesis block with this command:
 ```shell
-./eva --datadir data init ./avis.json
+./eva --datadir data init ./eva.json
 ```
 
 #### 4. Restart full node
 Restart full node with this command:
 ```shell
-./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./avis.toml
+./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./eva.toml
 ```
 
 Restart full node with Miner with this command:
 ```shell
-./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9 --zkpvkpath ./verifykey.txt --config ./avis.toml
+./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9 --zkpvkpath ./verifykey.txt --config ./eva.toml
 ```
 
 ### Configuration
@@ -212,7 +212,7 @@ $ eva --your-favourite-flags dumpconfig
 #### Docker quick start
 Using `docker build` Docker can build images automatically by reading the instructions from a Dockerfile. Traditionally, the `Dockerfile` is called `Dockerfile` and located in the root of the context.You use the `-f` flag with `docker build` to point to a Dockerfile anywhere in your file system.
 
-In addition, we have built the relevant images required for the avis network such as `go-miner`, `evanesco`, etc., and uploaded them to the docker hub. We strongly recommend that you can pull our built images directly from our docker repository so that you can quickly start the avis node. For more information, click on the link below:[evanesconetworks](https://hub.docker.com/repositories)
+In addition, we have built the relevant images required for the EVA network such as `go-miner`, `evanesco`, etc., and uploaded them to the docker hub. We strongly recommend that you can pull our built images directly from our docker repository so that you can quickly start the EVA node. For more information, click on the link below:[evanesconetworks](https://hub.docker.com/repositories)
 ### Programmatically interfacing `eva` nodes
 
 As a developer, sooner rather than later you'll want to start interacting with `eva` and the
