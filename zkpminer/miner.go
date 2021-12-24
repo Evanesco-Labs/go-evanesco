@@ -16,6 +16,7 @@ import (
 	"math/rand"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -242,6 +243,7 @@ func NewLocalMiner(config Config, backend Backend) (*Miner, error) {
 func NewMiner(config Config) (*Miner, error) {
 	runtime.GOMAXPROCS(1)
 	zkpProver, err := problem.NewProblemProver(config.PkPath)
+	debug.FreeOSMemory()
 	if err != nil {
 		log.Error(err.Error())
 		return nil, err

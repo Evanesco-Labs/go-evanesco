@@ -9,6 +9,7 @@ import (
 	"github.com/Evanesco-Labs/go-evanesco/zkpminer/keypair"
 	"github.com/Evanesco-Labs/go-evanesco/zkpminer/problem"
 	"github.com/Evanesco-Labs/go-evanesco/zkpminer/vrf"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 )
@@ -150,6 +151,7 @@ func (w *Worker) SolveProblem(task *Task) error {
 	preimage := append(addrBytes, task.lottery.ChallengeHeaderHash[:]...)
 	preimage = crypto.Keccak256(preimage)
 	mimcHash, proof := w.zkpProver.Prove(preimage)
+	debug.FreeOSMemory()
 	if mimcHash == nil || proof == nil {
 		return ZKPProofError
 	}
