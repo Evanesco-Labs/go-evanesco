@@ -68,6 +68,6 @@ require (
 )
 
 replace (
-	github.com/consensys/gnark v0.4.0 => github.com/Evanesco-Labs/gnark v0.4.1-0.20211220040658-f2310c43c4bf
+	github.com/consensys/gnark v0.4.0 => github.com/Evanesco-Labs/gnark v0.4.1-0.20211224081327-4f8af4c8073f
 	github.com/consensys/gnark-crypto v0.4.1-0.20210428083642-6bd055b79906 => github.com/Evanesco-Labs/gnark-crypto v0.4.1-0.20211220040057-c079b829266f
 )
