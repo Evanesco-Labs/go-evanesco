@@ -188,15 +188,6 @@ var (
 		utils.WhiteNoiseBootstrapFlag,
 	}
 
-	zkpMineFlags = []cli.Flag{
-		utils.ZKPVkPath,
-		utils.ZKPMinerCoinbaseAddress,
-		utils.ZKPMinerKeyPath,
-		utils.ZKPMinerPassword,
-		utils.ZKPMinerEnableFlag,
-		utils.ZKPMinerPkPath,
-	}
-
 	metricsFlags = []cli.Flag{
 		utils.MetricsEnabledFlag,
 		utils.MetricsEnabledExpensiveFlag,
@@ -255,7 +246,6 @@ func init() {
 	app.Flags = append(app.Flags, consoleFlags...)
 	app.Flags = append(app.Flags, debug.Flags...)
 	app.Flags = append(app.Flags, metricsFlags...)
-	app.Flags = append(app.Flags, zkpMineFlags...)
 
 	app.Before = func(ctx *cli.Context) error {
 		return debug.Setup(ctx)
@@ -433,18 +423,6 @@ func startNode(ctx *cli.Context, stack *node.Node, backend ethapi.Backend) {
 		threads := ctx.GlobalInt(utils.MinerThreadsFlag.Name)
 		if err := ethBackend.StartMining(threads); err != nil {
 			utils.Fatalf("Failed to start mining: %v", err)
-		}
-	}
-
-	//Start ZKP mining
-	if ctx.GlobalBool(utils.ZKPMinerEnableFlag.Name) {
-		ethBackend, ok := backend.(*eth.EthAPIBackend)
-		if !ok {
-			utils.Fatalf("Ethereum service not running: %v", err)
-		}
-		err := ethBackend.StartZKPMiner()
-		if err != nil {
-			utils.Fatalf("Failed to start ZKP mining: %v", err)
 		}
 	}
 }

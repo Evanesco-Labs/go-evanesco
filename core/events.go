@@ -30,9 +30,6 @@ type NewMinedBlockEvent struct{ Block *types.Block }
 // RemovedLogsEvent is posted when a reorg happens
 type RemovedLogsEvent struct{ Logs []*types.Log }
 
-//NewSolvedLotteryEvent is posted when a new lottery is solved by local or remote miner
-type NewSolvedLotteryEvent struct{ Lot types.LotterySubmit }
-
 type ChainEvent struct {
 	Block *types.Block
 	Hash  common.Hash

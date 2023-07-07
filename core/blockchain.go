@@ -20,9 +20,7 @@ package core
 import (
 	"errors"
 	"fmt"
-	clique2 "github.com/Evanesco-Labs/go-evanesco/consensus/clique"
 	"github.com/Evanesco-Labs/go-evanesco/rpc"
-	"github.com/Evanesco-Labs/go-evanesco/zkpminer/problem"
 	"io"
 	"math/big"
 	mrand "math/rand"
@@ -212,9 +210,7 @@ type BlockChain struct {
 
 	shouldPreserve  func(*types.Block) bool        // Function used to determine whether should preserve the given block.
 	terminateInsert func(common.Hash, uint64) bool // Testing hook used to terminate ancient receipt chain insertion.
-
-	verifier      *problem.Verifier
-	InprocHandler *rpc.Server
+	InprocHandler   *rpc.Server
 }
 
 // NewBlockChain returns a fully initialised block chain using information
@@ -256,25 +252,7 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 	bc.validator = NewBlockValidator(chainConfig, bc, engine)
 	bc.prefetcher = newStatePrefetcher(chainConfig, bc, engine)
 	bc.processor = NewStateProcessor(chainConfig, bc, engine)
-	getHeaderByNum := func(num uint64) (*types.Header, error) {
-		header := bc.GetHeaderByNumber(num)
-		if header == nil {
-			return nil, errors.New("header not found")
-		}
-		return header, nil
-	}
-
-	verifier, err := problem.NewProblemVerifier(chainConfig.Clique.VKPath,
-		types.CoinBaseInterval,
-		types.SubmitAdvance,
-		getHeaderByNum,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	bc.verifier = verifier
-
+	var err error
 	bc.hc, err = NewHeaderChain(db, chainConfig, engine, bc.insertStopped)
 	if err != nil {
 		return nil, err
@@ -2286,28 +2264,6 @@ func (bc *BlockChain) update() {
 			return
 		}
 	}
-}
-
-func (bc *BlockChain) GetLatestCoinbaseHeader() *types.Header {
-	currHeader := bc.CurrentHeader()
-	if currHeader.IsZKPRewardBlock() {
-		return currHeader
-	}
-	delta := new(big.Int).Mod(currHeader.Number, new(big.Int).SetUint64(uint64(100)))
-	return bc.GetHeaderByNumber(new(big.Int).Add(currHeader.Number, new(big.Int).Neg(delta)).Uint64())
-}
-
-func (bc *BlockChain) VerifyLottery(l types.Lottery, sig []byte) bool {
-	return bc.verifier.VerifyLottery(&l, sig, bc.GetLatestCoinbaseHeader())
-}
-
-func (bc *BlockChain) HandleValidLottery(l types.Lottery) {
-	log.Info("handle valid lottery", "hash", l.Hash())
-	clique, ok := bc.Engine().(*clique2.Clique)
-	if !ok {
-		return
-	}
-	clique.SetInboundLotteryScore(l)
 }
 
 // maintainTxIndex is responsible for the construction and deletion of the

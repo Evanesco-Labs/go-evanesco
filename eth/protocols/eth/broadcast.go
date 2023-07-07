@@ -17,7 +17,6 @@
 package eth
 
 import (
-	"github.com/Evanesco-Labs/go-evanesco/log"
 	"math/big"
 
 	"github.com/Evanesco-Labs/go-evanesco/common"
@@ -55,21 +54,6 @@ func (p *Peer) broadcastBlocks() {
 			}
 			p.Log().Trace("Announced block", "number", block.Number(), "hash", block.Hash())
 
-		case <-p.term:
-			return
-		}
-	}
-}
-
-func (p *Peer) broadcastLotteries() {
-	for {
-		select {
-		case lot := <-p.queueLotteries:
-			if err := p.SendNewLottery(lot); err != nil {
-				log.Error("Failed to send lottery", "err", err)
-				return
-			}
-			p.Log().Trace("Send lottery", "hash", lot.Hash())
 		case <-p.term:
 			return
 		}

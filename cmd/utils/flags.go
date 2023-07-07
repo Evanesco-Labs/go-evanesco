@@ -20,8 +20,6 @@ package utils
 import (
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/Evanesco-Labs/go-evanesco/zkpminer"
-	zkpkeypair "github.com/Evanesco-Labs/go-evanesco/zkpminer/keypair"
 	"io"
 	"io/ioutil"
 	"math"
@@ -788,34 +786,6 @@ var (
 		Name:  "wn-bootstrap",
 		Usage: "Bootstrap node Multiaddress of the WhiteNoise network to access",
 	}
-
-	//zkp verifier configs
-	ZKPVkPath = cli.StringFlag{
-		Name:  "zkpvkpath",
-		Usage: "file path of ZKP verify key",
-	}
-
-	//ZKP miner configs
-	ZKPMinerEnableFlag = cli.BoolFlag{
-		Name:  "zkpminer",
-		Usage: "Enable ZKP miner server for full node",
-	}
-	ZKPMinerPkPath = cli.StringFlag{
-		Name:  "zkppkpath",
-		Usage: "file path of ZKP prove key for ZKP miner",
-	}
-	ZKPMinerKeyPath = cli.StringFlag{
-		Name:  "zkpkeypath",
-		Usage: "keyfile path of ZKP miner address",
-	}
-	ZKPMinerPassword = cli.StringFlag{
-		Name:  "zkppassword",
-		Usage: "password of zkp miner keyfile",
-	}
-	ZKPMinerCoinbaseAddress = cli.StringFlag{
-		Name:  "zkpcoinbase",
-		Usage: "coinbase address to get miner rewards",
-	}
 )
 
 // MakeDataDir retrieves the currently requested data directory, terminating
@@ -1464,70 +1434,6 @@ func setMiner(ctx *cli.Context, cfg *miner.Config) {
 	}
 }
 
-func setZKPMiner(ctx *cli.Context, cfg *zkpminer.Config) {
-	minerList := make([]zkpkeypair.Key, 0)
-	if !ctx.GlobalBool(ZKPMinerEnableFlag.Name) {
-		return
-	}
-
-	keyPath := ""
-	if ctx.GlobalIsSet(ZKPMinerKeyPath.Name) {
-		keyPath = ctx.GlobalString(ZKPMinerKeyPath.Name)
-	} else {
-		keystoreDir := ctx.GlobalString(DataDirFlag.Name) + "/keystore/"
-		files, err := ioutil.ReadDir(keystoreDir)
-		if len(files) == 0 || err != nil {
-			Fatalf("ZKP miner key path not exist")
-		}
-		keyPath = keystoreDir + files[0].Name()
-	}
-
-	key, err := GetKeyFromFile(ctx, keyPath)
-	if err != nil {
-		Fatalf("load ZKP miner key from file error %v", err)
-	}
-	minerList = append(minerList, key)
-
-	var coinbaseAddr common.Address
-	if ctx.GlobalIsSet(ZKPMinerCoinbaseAddress.Name) {
-		coinbaseAddr = common.HexToAddress(ctx.GlobalString(ZKPMinerCoinbaseAddress.Name))
-	}
-
-	pkPath := "./QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9"
-	if ctx.GlobalIsSet(ZKPMinerPkPath.Name) {
-		pkPath = ctx.GlobalString(ZKPMinerPkPath.Name)
-	}
-
-	cfg.Customize(minerList, coinbaseAddr, []string{}, pkPath)
-}
-
-func GetKeyFromFile(ctx *cli.Context, keypath string) (zkpkeypair.Key, error) {
-	// Read key from file.
-	keyJson, err := ioutil.ReadFile(keypath)
-	if err != nil {
-		return zkpkeypair.Key{}, fmt.Errorf("failed to read the keyfile at '%s': %v", keypath, err)
-	}
-
-	// Decrypt key with passphrase.
-	password := ""
-	if ctx.GlobalIsSet(ZKPMinerPassword.Name) {
-		password = ctx.GlobalString(ZKPMinerPassword.Name)
-	} else {
-		password = GetPassPhrase("", false)
-	}
-
-	rawKey, err := keystore.DecryptKey(keyJson, password)
-	if err != nil {
-		return zkpkeypair.Key{}, fmt.Errorf("error decrypting key: %v", err)
-	}
-
-	minerKey, err := zkpkeypair.NewKey(rawKey.PrivateKey)
-	if err != nil {
-		return zkpkeypair.Key{}, fmt.Errorf("error loading miner key : %v", err)
-	}
-	return minerKey, nil
-}
-
 func setWhitelist(ctx *cli.Context, cfg *ethconfig.Config) {
 	whitelist := ctx.GlobalString(WhitelistFlag.Name)
 	if whitelist == "" {
@@ -1614,14 +1520,8 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	setTxPool(ctx, &cfg.TxPool)
 	setEthash(ctx, cfg)
 	setMiner(ctx, &cfg.Miner)
-	setZKPMiner(ctx, &cfg.ZKPminer)
 	setWhitelist(ctx, cfg)
 	setLes(ctx, cfg)
-
-	//set vkpath
-	if ctx.GlobalIsSet(ZKPVkPath.Name) {
-		cfg.ZKPVkPath = ctx.GlobalString(ZKPVkPath.Name)
-	}
 
 	// Cap the cache allowance and tune the garbage collector
 	mem, err := gopsutil.VirtualMemory()

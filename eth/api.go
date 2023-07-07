@@ -21,10 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	clique2 "github.com/Evanesco-Labs/go-evanesco/consensus/clique"
-	"github.com/Evanesco-Labs/go-evanesco/eth/protocols/eth"
-	"github.com/Evanesco-Labs/go-evanesco/log"
-	"github.com/Evanesco-Labs/go-evanesco/zkpminer"
 	"io"
 	"math/big"
 	"os"
@@ -47,7 +43,6 @@ import (
 var (
 	NotCliqueConsensusError = errors.New("no clique engine, invalid Evanesco node")
 	NotEffectiveAddrError   = errors.New("miner address not staked or not in valid time period")
-	ZKPProofVerifyError     = errors.New("ZKP proof verify failed")
 	NotPledgeCoinbaseError  = errors.New("coinbase address conflict, check the coinbase address setting in Fortress")
 	StopMinerError          = errors.New("submit error connection closed stop mining")
 )
@@ -76,41 +71,6 @@ func (api *PublicEthereumAPI) Coinbase() (common.Address, error) {
 // Hashrate returns the POW hashrate
 func (api *PublicEthereumAPI) Hashrate() hexutil.Uint64 {
 	return hexutil.Uint64(api.e.Miner().Hashrate())
-}
-
-func (api *PublicEthereumAPI) CheckIseffectiveNew(addr common.Address) bool {
-	ok, addr := zkpminer.Iseffective(addr, api.e.BlockChain().InprocHandler)
-	log.Info("Check is effective new", "coinbase address", addr)
-	return ok
-}
-
-// LotterySubmit handles remote miner's ZKP mining lottery
-func (api *PublicEthereumAPI) LotterySubmit(submit types.LotterySubmit) error {
-	log.Debug("receive lottery submit", "hash", submit.Hash())
-	//check if better
-	clique, ok := api.e.BlockChain().Engine().(*clique2.Clique)
-	if !ok {
-		return NotCliqueConsensusError
-	}
-	if !clique.IfLotteryBetterThanBest(submit.Lottery) {
-		return nil
-	}
-	ok, coinbasePledge := zkpminer.Iseffective(submit.MinerAddr, api.e.BlockChain().InprocHandler)
-	if !ok {
-		return NotEffectiveAddrError
-	}
-	emptyAddr := common.Address{}
-	if coinbasePledge != emptyAddr && coinbasePledge != submit.CoinbaseAddr {
-		return NotPledgeCoinbaseError
-	}
-	//handle local solved lottery
-	if !api.e.BlockChain().VerifyLottery(submit.Lottery, submit.Signature[:]) {
-		log.Warn("ZKP miner submit invalid lottery", "hash", submit.Lottery.Hash())
-		return nil
-	}
-	api.e.BlockChain().HandleValidLottery(submit.Lottery)
-	api.e.handler.BroadcastLottery(eth.LotteryPacket(submit))
-	return nil
 }
 
 // PublicMinerAPI provides an API to control the miner.
