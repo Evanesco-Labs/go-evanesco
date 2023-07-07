@@ -19,8 +19,6 @@ package eth
 import (
 	"errors"
 	"fmt"
-	clique2 "github.com/Evanesco-Labs/go-evanesco/consensus/clique"
-	"github.com/Evanesco-Labs/go-evanesco/zkpminer"
 	"math/big"
 	"sync/atomic"
 	"time"
@@ -100,44 +98,10 @@ func (h *ethHandler) Handle(peer *eth.Peer, packet eth.Packet) error {
 
 	case *eth.PooledTransactionsPacket:
 		return h.txFetcher.Enqueue(peer.ID(), *packet, true)
-	case *eth.LotteryPacket:
-		return h.handleLottery(peer, *packet)
 
 	default:
 		return fmt.Errorf("unexpected eth packet type: %T", packet)
 	}
-}
-
-//handle p2p lottery message
-func (h *ethHandler) handleLottery(peer *eth.Peer, lotPacket eth.LotteryPacket) error {
-	clique, ok := h.Chain().Engine().(*clique2.Clique)
-	if !ok {
-		log.Warn("get lottery packet but no clique consensus")
-		return nil
-	}
-
-	if !clique.IfLotteryBetterThanBest(lotPacket.Lottery) {
-		return nil
-	}
-
-	ok, coinbasePledge := zkpminer.Iseffective(lotPacket.MinerAddr, h.chain.InprocHandler)
-	nonPledgeCoinbase := common.Address{}
-	if !ok {
-		return nil
-	}
-
-	if coinbasePledge != nonPledgeCoinbase && coinbasePledge != lotPacket.CoinbaseAddr {
-		return nil
-	}
-
-	if !h.Chain().VerifyLottery(lotPacket.Lottery, lotPacket.Signature[:]) {
-		return errors.New("lottery verify failed")
-	}
-
-	(*handler)(h).BroadcastLottery(lotPacket)
-	//handle in clique
-	h.Chain().HandleValidLottery(lotPacket.Lottery)
-	return nil
 }
 
 // handleHeaders is invoked from a peer's message handler when it transmits a batch

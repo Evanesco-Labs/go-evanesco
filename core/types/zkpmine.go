@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"github.com/Evanesco-Labs/go-evanesco/common"
 	"github.com/Evanesco-Labs/go-evanesco/crypto"
 	"math/big"
@@ -17,16 +16,6 @@ const (
 	SubmitAdvance    = uint64(20)
 	RewardAmount     = uint64(500)
 )
-
-type ZKPReward struct {
-	CoinbaseAddr common.Address `json:"coinbase_addr"`
-	Score        [32]byte       `json:"score"`
-}
-
-type LotterySubmit struct {
-	Lottery   `json:"lottery"`
-	Signature [65]byte `json:"signature"`
-}
 
 type Lottery struct {
 	CoinbaseAddr        common.Address `json:"coinbase_addr"`
@@ -66,68 +55,7 @@ func (l *Lottery) DeepCopy() Lottery {
 	return cpLottery
 }
 
-func (l *Lottery) SetMinerAddr(addr common.Address) {
-	l.MinerAddr = addr
-}
-
-func (l *Lottery) SetVrfProof(proof []byte) {
-	l.VrfProof = proof
-}
-
-func (l *Lottery) SetZKPProof(proof []byte) {
-	l.ZkpProof = proof
-}
-
-func (l *Lottery) Serialize() ([]byte, error) {
-	return json.Marshal(l)
-}
-
-func (l *Lottery) Deserialize(data []byte) error {
-	return json.Unmarshal(data, l)
-}
-
-func (l *Lottery) ScoreBytes() [32]byte {
-	var res [32]byte
-	b := append(l.MinerAddr.Bytes(), l.MimcHash...)
-	b = xor(keccak256(b), l.ChallengeHeaderHash[:])
-	copy(res[:], b)
-	return res
-}
-
-func (l *Lottery) Score() *big.Int {
-	b := l.ScoreBytes()
-	return new(big.Int).SetBytes(b[:])
-}
-
-func (l *Lottery) Hash() common.Hash {
-	b, err := json.Marshal(l)
-	if err != nil {
-		return common.Hash{}
-	}
-	return crypto.Keccak256Hash(b)
-}
-
-func IfPassDiff(score []byte, diff *big.Int) bool {
-	target := new(big.Int).Div(max256, diff)
-	if new(big.Int).SetBytes(score).Cmp(target) > 0 {
-		return false
-	} else {
-		return true
-	}
-}
-
-func xor(one, other []byte) (xor []byte) {
-	if len(one) != len(other) {
-		return nil
-	}
-	xor = make([]byte, len(one))
-	for i := 0; i < len(one); i++ {
-		xor[i] = one[i] ^ other[i]
-	}
-	return xor
-}
-
-func (h *Header) IsZKPRewardBlock() bool {
+func (h *Header) IsRewardBlock() bool {
 	zero := new(big.Int).SetUint64(uint64(0))
 	return new(big.Int).Mod(h.Number, new(big.Int).SetUint64(CoinBaseInterval)).Cmp(zero) == 0
 }

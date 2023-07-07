@@ -94,7 +94,6 @@ mkdir evanode
 Copy these 4 files into `evanode` with this command: 
 ```shell
 cp ./build/bin/eva ./evanode
-cp ./verifykey.txt ./evanode
 cp ./eva.json ./evanode
 cp ./eva.toml ./evanode
 ```
@@ -118,7 +117,7 @@ Init genesis block with this command:
 #### 4. Start Full Node 
 Start up full node with this command:
 ```shell
-./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./eva.toml
+./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --config ./eva.toml
 ```
 
 This will connect your node to the EVA network, logs like the following will be printed:
@@ -142,23 +141,6 @@ curl --location --request POST 'localhost:8546/' \
 	"id":83
 }'
 ```
-
-#### 5. Start Full Node with Miner
-
-Before starting to mine, you also need to download a ZKP prove key file `QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9`. This is a unique ZKP prove key, and miner have to load this ZKP prove key to start GPow working.
-
-[IPFS Download Link](https://ipfs.io/ipfs/QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9)
-
-Copy this file to the `evanode` directory, and start full node and miner with this command:
-```shell
-./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9 --zkpvkpath ./verifykey.txt --config ./eva.toml
-```
-
-This command will start miner with the account you just created and send reward to this address if your mining work has the best score.
-
-Set flag `--zkpkeypath` the path of your keyfile, if you want to derive miner address from this keyfile.
-
-Set flag `--zkpcoinbase` the coinbase address, if you want to receive mining rewards to this address.  
 
 ### Update and Restart
 We may update our code and restart the EVA network.
@@ -186,12 +168,7 @@ Init genesis block with this command:
 #### 4. Restart full node
 Restart full node with this command:
 ```shell
-./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpvkpath ./verifykey.txt --config ./eva.toml
-```
-
-Restart full node with Miner with this command:
-```shell
-./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --zkpminer --zkppkpath ./QmQL4k1hKYiW3SDtMREjnrah1PBsak1VE3VgEqTyoDckz9 --zkpvkpath ./verifykey.txt --config ./eva.toml
+./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --config ./eva.toml
 ```
 
 ### Configuration

@@ -55,7 +55,6 @@ import (
 	"github.com/Evanesco-Labs/go-evanesco/params"
 	"github.com/Evanesco-Labs/go-evanesco/rlp"
 	"github.com/Evanesco-Labs/go-evanesco/rpc"
-	"github.com/Evanesco-Labs/go-evanesco/zkpminer"
 )
 
 // Config contains the configuration options of the ETH protocol.
@@ -94,8 +93,6 @@ type Ethereum struct {
 	netRPCService *ethapi.PublicNetAPI
 
 	p2pServer *p2p.Server
-
-	zkpMiner *zkpminer.Miner
 
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 }
@@ -193,16 +190,14 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			Preimages:           config.Preimages,
 		}
 	)
-	//add verify key path
+
 	if chainConfig != nil {
 		if chainConfig.Clique == nil {
 			chainConfig.Clique = &params.CliqueConfig{
 				Period: 6,
 				Epoch:  3000,
-				VKPath: "./verifykey.txt",
 			}
 		}
-		chainConfig.Clique.VKPath = config.ZKPVkPath
 	}
 
 	eth.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, chainConfig, eth.engine, vmConfig, eth.shouldPreserve, &config.TxLookupLimit, stack.GetInprocHandler())
@@ -451,27 +446,6 @@ func (s *Ethereum) SetEtherbase(etherbase common.Address) {
 	s.lock.Unlock()
 
 	s.miner.SetEtherbase(etherbase)
-}
-
-func (s *Ethereum) StartZKPMiner(config zkpminer.Config) error {
-	_, ok := s.engine.(*clique.Clique)
-	if !ok {
-		return errors.New("start ZKP miner with not-clique engine")
-	}
-
-	zkpMiner, err := zkpminer.NewLocalMiner(config, s)
-	if err != nil {
-		return err
-	}
-	s.zkpMiner = zkpMiner
-	return nil
-}
-
-func (s *Ethereum) CloseZKPMiner() {
-	if s.zkpMiner == nil {
-		return
-	}
-	s.zkpMiner.Close()
 }
 
 // StartMining starts the miner with the given number of CPU threads. If mining

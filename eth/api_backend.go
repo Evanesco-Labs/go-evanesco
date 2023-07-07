@@ -21,8 +21,6 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/Evanesco-Labs/go-evanesco/zkpminer"
-
 	"github.com/Evanesco-Labs/go-evanesco/accounts"
 	"github.com/Evanesco-Labs/go-evanesco/common"
 	"github.com/Evanesco-Labs/go-evanesco/consensus"
@@ -350,18 +348,6 @@ func (b *EthAPIBackend) Miner() *miner.Miner {
 
 func (b *EthAPIBackend) StartMining(threads int) error {
 	return b.eth.StartMining(threads)
-}
-
-func (b *EthAPIBackend) ZKPMiner() *zkpminer.Miner {
-	return b.eth.zkpMiner
-}
-
-func (b *EthAPIBackend) StartZKPMiner() error {
-	return b.eth.StartZKPMiner(b.eth.config.ZKPminer)
-}
-
-func (b *EthAPIBackend) CloseZKPMiner() {
-	b.eth.CloseZKPMiner()
 }
 
 func (b *EthAPIBackend) StateAtBlock(ctx context.Context, block *types.Block, reexec uint64, base *state.StateDB, checkLive bool) (*state.StateDB, error) {

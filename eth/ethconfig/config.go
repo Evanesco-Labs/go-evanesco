@@ -37,7 +37,6 @@ import (
 	"github.com/Evanesco-Labs/go-evanesco/miner"
 	"github.com/Evanesco-Labs/go-evanesco/node"
 	"github.com/Evanesco-Labs/go-evanesco/params"
-	"github.com/Evanesco-Labs/go-evanesco/zkpminer"
 )
 
 // FullNodeGPO contains default gasprice oracle settings for full node.
@@ -89,8 +88,6 @@ var Defaults = Config{
 		GasPrice: big.NewInt(params.GWei * 10000),
 		Recommit: 3 * time.Second,
 	},
-	ZKPminer:    zkpminer.DefaultConfig(),
-	ZKPVkPath: "./verifykey.txt",
 	TxPool:      core.DefaultTxPoolConfig,
 	RPCGasCap:   50000000,
 	GPO:         FullNodeGPO,
@@ -173,11 +170,6 @@ type Config struct {
 
 	// Mining options
 	Miner miner.Config
-
-	//ZKP miner options
-	ZKPminer zkpminer.Config
-
-	ZKPVkPath string
 
 	// Ethash options
 	Ethash ethash.Config

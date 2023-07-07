@@ -18,9 +18,7 @@ package eth
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	clique2 "github.com/Evanesco-Labs/go-evanesco/consensus/clique"
 
 	"github.com/Evanesco-Labs/go-evanesco/common"
 	"github.com/Evanesco-Labs/go-evanesco/core/types"
@@ -519,25 +517,4 @@ func handlePooledTransactions66(backend Backend, msg Decoder, peer *Peer) error 
 	requestTracker.Fulfil(peer.id, peer.version, PooledTransactionsMsg, txs.RequestId)
 
 	return backend.Handle(peer, &txs.PooledTransactionsPacket)
-}
-
-//handle lottery send from other peer nodes
-func handleLotteryMsg(backend Backend, msg Decoder, peer *Peer) error {
-	var lottery LotteryPacket
-	if err := msg.Decode(&lottery); err != nil {
-		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
-	}
-	clique, ok := backend.Chain().Engine().(*clique2.Clique)
-	if !ok {
-		return fmt.Errorf("%w: message %v: %v", errLotteryNotClique, msg, errors.New("not clique consensus"))
-	}
-
-	// mark this lottery
-	peer.markLottery(lottery.Hash())
-
-	//check if this lottery better than best
-	if !clique.IfLotteryBetterThanBest(lottery.Lottery) {
-		return nil
-	}
-	return backend.Handle(peer, &lottery)
 }

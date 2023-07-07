@@ -18,8 +18,6 @@ package eth
 
 import (
 	"errors"
-	clique2 "github.com/Evanesco-Labs/go-evanesco/consensus/clique"
-	"github.com/Evanesco-Labs/go-evanesco/zkpminer"
 	"math"
 	"math/big"
 	"sync"
@@ -111,11 +109,10 @@ type handler struct {
 	txFetcher    *fetcher.TxFetcher
 	peers        *peerSet
 
-	eventMux         *event.TypeMux
-	txsCh            chan core.NewTxsEvent
-	txsSub           event.Subscription
-	minedBlockSub    *event.TypeMuxSubscription
-	solvedLotterySub *event.TypeMuxSubscription
+	eventMux      *event.TypeMux
+	txsCh         chan core.NewTxsEvent
+	txsSub        event.Subscription
+	minedBlockSub *event.TypeMuxSubscription
 
 	whitelist map[uint64]common.Hash
 
@@ -410,10 +407,6 @@ func (h *handler) Start(maxPeers int) {
 	h.minedBlockSub = h.eventMux.Subscribe(core.NewMinedBlockEvent{})
 	go h.minedBroadcastLoop()
 
-	h.wg.Add(1)
-	h.solvedLotterySub = h.eventMux.Subscribe(core.NewSolvedLotteryEvent{})
-	go h.lotteryBroadcastLoop()
-
 	// start sync handlers
 	h.wg.Add(2)
 	go h.chainSync.loop()
@@ -423,7 +416,6 @@ func (h *handler) Start(maxPeers int) {
 func (h *handler) Stop() {
 	h.txsSub.Unsubscribe()        // quits txBroadcastLoop
 	h.minedBlockSub.Unsubscribe() // quits blockBroadcastLoop
-	h.solvedLotterySub.Unsubscribe()
 
 	// Quit chainSync and txsync64.
 	// After this is done, no new peers will be accepted.
@@ -438,14 +430,6 @@ func (h *handler) Stop() {
 	h.peerWG.Wait()
 
 	log.Info("Evanesco protocol stopped")
-}
-
-func (h *handler) BroadcastLottery(packet eth.LotteryPacket) {
-	log.Debug("broadcast lottery async", "hash", packet.Hash())
-	peers := h.peers.peersWithoutLottery(packet.Hash())
-	for _, peer := range peers {
-		peer.AsyncSendNewLottery(&packet)
-	}
 }
 
 // BroadcastBlock will either propagate a block to a subset of its peers, or
@@ -545,42 +529,6 @@ func (h *handler) txBroadcastLoop() {
 			h.BroadcastTransactions(event.Txs)
 		case <-h.txsSub.Err():
 			return
-		}
-	}
-}
-
-//handle and broadcast lotteries from local zkp miner
-func (h *handler) lotteryBroadcastLoop() {
-	defer h.wg.Done()
-	for obj := range h.solvedLotterySub.Chan() {
-		if ev, ok := obj.Data.(core.NewSolvedLotteryEvent); ok {
-			//check if better
-			clique, ok := h.chain.Engine().(*clique2.Clique)
-			if !ok {
-				continue
-			}
-			if !clique.IfLotteryBetterThanBest(ev.Lot.Lottery) {
-				continue
-			}
-			nonPledgeCoinbase := common.Address{}
-			ok, coinbasePledge := zkpminer.Iseffective(ev.Lot.MinerAddr, h.chain.InprocHandler)
-			if !ok {
-				log.Error("miner address not effective", "addr", ev.Lot.MinerAddr)
-				continue
-			}
-
-			if coinbasePledge != nonPledgeCoinbase && coinbasePledge != ev.Lot.CoinbaseAddr {
-				log.Error("coinbase address conflict, check the coinbase address setting in Fortress")
-				continue
-			}
-
-			//handle local solved lottery
-			if !h.chain.VerifyLottery(ev.Lot.Lottery, ev.Lot.Signature[:]) {
-				log.Error("ZKP miner submit invalid lottery", "hash", ev.Lot.Lottery.Hash())
-				return
-			}
-			h.chain.HandleValidLottery(ev.Lot.Lottery)
-			h.BroadcastLottery(eth.LotteryPacket(ev.Lot))
 		}
 	}
 }
