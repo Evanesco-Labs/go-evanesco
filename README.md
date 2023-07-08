@@ -142,31 +142,26 @@ curl --location --request POST 'localhost:8546/' \
 }'
 ```
 
-### Update and Restart
+### Upgrade PoS
 We may update our code and restart the EVA network.
 Follow the steps below to restart the full node.
 
 #### 1. Rebuild
-Download the latest code from [go-evanesco](https://github.com/Evanesco-Labs/go-evanesco) in branch main. Build the latest code and get the new executable file `eva`.
+Download the latest code from [go-evanesco](https://github.com/Evanesco-Labs/go-evanesco) in branch main. Build the latest code and get the new executable file `eva` with command:
 
-#### 2. Clear and Replace
+```
+make eva
+```
+
+#### 2. Replace
 Go to the directory of your previous full node. If you follow the guide above to run full node before, this directory should be named `evanode`.
 
 Remove the old executable file `eva` and copy the new `eva` into it.
 
-Remove the config file `eva.toml` and copy the new `eva.toml` from the new source code directory into `evanode`.
-
-Remove the directory `evanode/data/eva`. 
-**Notice that do not remove the `evanode/data/keystore` directory!**
-
-#### 3. Re-init Genesis Block
-Init genesis block with this command:
-```shell
-./eva --datadir data init ./eva.json
-```
-
 #### 4. Restart full node
-Restart full node with this command:
+Stop the full node with command depending on how you started it.
+
+Then restart it with this command:
 ```shell
 ./eva --datadir ./data --syncmode 'fast' --networkid 2213 --port 30304 --rpc --rpcaddr '0.0.0.0' --rpccorsdomain "*" --rpcport 8546 --rpcapi 'personal,eth,net,web3,txpool,miner,clique' --ws --ws.addr '0.0.0.0' --ws.port 7778 --ws.api 'personal,eth,net,web3,txpool,miner,clique' --config ./eva.toml
 ```
@@ -180,16 +175,14 @@ configuration file via:
 $ eva --config /path/to/your_config.toml
 ```
 
+Notice that you should keep the `[Node.P2P]` section in the `eva.toml`.
+
 To get an idea how the file should look like you can use the `dumpconfig` subcommand to
 export your existing configuration:
 
 ```shell
 $ eva --your-favourite-flags dumpconfig
 ```
-#### Docker quick start
-Using `docker build` Docker can build images automatically by reading the instructions from a Dockerfile. Traditionally, the `Dockerfile` is called `Dockerfile` and located in the root of the context.You use the `-f` flag with `docker build` to point to a Dockerfile anywhere in your file system.
-
-In addition, we have built the relevant images required for the EVA network such as `go-miner`, `evanesco`, etc., and uploaded them to the docker hub. We strongly recommend that you can pull our built images directly from our docker repository so that you can quickly start the EVA node. For more information, click on the link below:[evanesconetworks](https://hub.docker.com/repositories)
 ### Programmatically interfacing `eva` nodes
 
 As a developer, sooner rather than later you'll want to start interacting with `eva` and the
