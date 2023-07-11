@@ -530,6 +530,8 @@ func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 	// If the block isn't a checkpoint, cast a random vote (good enough for now)
 	header.Coinbase = common.Address{}
 	header.Nonce = types.BlockNonce{}
+	header.BestLottery.CoinbaseAddr = c.signer
+	log.Info("prepare signer coinbase", "address", c.signer)
 
 	number := header.Number.Uint64()
 	// Assemble the voting snapshot to check which votes make sense
@@ -609,10 +611,8 @@ func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Heade
 	} else {
 		if header.IsRewardBlock() {
 			minerReward, teamReward, ecoReward, validatorReward := CurrentReward(header.Number)
-			signer, err := c.Author(header)
-			if err != nil {
-				signer = validatorAddress
-			}
+			signer := header.BestLottery.CoinbaseAddr
+			log.Info("finalize rewad signer address", "address", signer)
 			state.AddBalance(signer, minerReward)
 			state.AddBalance(teamAddress, teamReward)
 			state.AddBalance(ecoAddress, ecoReward)
