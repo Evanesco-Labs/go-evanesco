@@ -59,7 +59,7 @@ const (
 	beforeRewardRate = uint64(1692)
 	afterRewardRate  = uint64(3381)
 
-	PosHeight = uint64(9590010)
+	PosHeight = uint64(9806910)
 )
 
 // Clique proof-of-authority protocol constants.
